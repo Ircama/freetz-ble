@@ -8,6 +8,14 @@ Included Python2.7 programs to be run inside freetz (FRITZ!Box):
 
 - `atc_mi_construct_adapters.py`: used by atc_mi_construct.py to provide the needed adapters. It calls *aes_ccm_codec.so*.
 
+## Main process
+
+- Continuously read BLE advertisements from the Ai-Thinker TB-03F-KIT module;
+- normalize data;
+- decode frames of different types and formats, including decryption;
+- extract relevant data and only keep modified values of each measure;
+- save data to a local SQLite DB.
+
 ## Installation
 
 Use a standard USB SD Card and set freetz to store user data to the USB SD Card.
