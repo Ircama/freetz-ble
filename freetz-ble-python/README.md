@@ -16,6 +16,20 @@ Included Python2.7 programs to be run inside freetz (FRITZ!Box):
 - extract relevant data and only keep modified values of each measure;
 - save data to a local SQLite DB.
 
+## Currently collected data
+
+Numerical values (from a single LYWSD03MMC Xiaomi Mijia Temperature And Humidity sensor):
+
+- temperature
+- humidity
+- battery_level
+
+Logical states:
+
+- flooding (from the SJWS01LM Xiaomi Mijia Flood Detector)
+- door (from the MCCGQ02HL Xiaomi Mijia Door and Window Sensor 2)
+- light (from the MCCGQ02HL Xiaomi Mijia Door and Window Sensor 2)
+
 ## Installation
 
 Use a standard USB SD Card and set freetz to store user data to the USB SD Card.

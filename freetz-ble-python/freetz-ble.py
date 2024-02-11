@@ -45,7 +45,8 @@ def create_db(drop=True):
                     CREATE TABLE IF NOT EXISTS sensor_data (
                         timestamp DATETIME,
                         humidity NUMERIC,
-                        ambient_temperature NUMERIC,
+                        temperature NUMERIC,
+                        battery_level NUMERIC);
                     CREATE INDEX i_sd_ts ON sensor_data(timestamp);
                     CREATE TABLE IF NOT EXISTS flooding_list (
                         timestamp DATETIME,
@@ -120,7 +121,7 @@ if args.debug:
 
 mtime = monotonic.time.time  # now mtime() can be used in place of time.time()
 t0 = mtime()
-last_numerical_save = t0
+last_numerical_save = 0
 
 if args.create:
     logging.warning("Dropping the DB and recreating it")
@@ -287,7 +288,9 @@ while True:
         db.commit()
 
     # Process numerical values only after 60 seconds from the last DB save
-    if mtime() - last_numerical_save < 60:  # gives correct elapsed time, even if system clock changed.
+    if (
+        not args.debug and not args.info and mtime() - last_numerical_save < 60
+    ):
         continue
 
     # Extract numerical vlues
@@ -301,29 +304,49 @@ while True:
     if humidity:
         humidity_v = humidity[0]
 
+    battery_level_v = None
+    battery_level = atc_mi_data.search_all("^battery_level")
+    if battery_level:
+        battery_level_v = battery_level[0]
+
     # Remove duplicates on numerical values
-    if temperature_v == latest_values.get("temperature"):
+    if (
+        temperature_v is None or
+        temperature_v == latest_values.get("temperature")
+    ):
         temperature_v = None
     else:
         latest_values["temperature"] = temperature_v
-    if humidity_v == latest_values.get("humidity"):
+    if (
+        humidity_v is None or
+        humidity_v == latest_values.get("humidity")
+    ):
         humidity_v = None
     else:
         latest_values["humidity"] = humidity_v
+    if (
+        battery_level_v is None or
+        battery_level_v == latest_values.get("battery_level")
+    ):
+        battery_level_v = None
+    else:
+        latest_values["battery_level"] = battery_level_v
 
     # Save numerical vlues to DB
-    if humidity_v or temperature_v:
+    if humidity_v or temperature_v or battery_level_v:
         if args.dry_run:
             logging.warning("Dry-run Insert values to table sensor_data")
         else:
             cur = db.cursor()
             cur.execute(
                 "INSERT INTO sensor_data ("
-                "timestamp, humidity, ambient_temperature) VALUES(?,?,?)",
+                "timestamp, humidity, temperature, battery_level)"
+                " VALUES(?,?,?,?)",
                 (
                     timestamp,
                     humidity_v,
-                    temperature_v
+                    temperature_v,
+                    battery_level_v
                 )
             )
             db.commit()
