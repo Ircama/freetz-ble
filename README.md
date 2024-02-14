@@ -39,7 +39,7 @@ When the TB-03F-KIT is connected to the FRITZ!Box device, freetz allows accessin
 
 Included folders in this repository:
 
-- [ble-adv](ble-adv/README.md): Ai-Thinker TB-03F-KIT firmware (including compilation and installation instructions),
+- [ble-adv-telink](ble-adv-telink/README.md): Ai-Thinker TB-03F-KIT firmware (including compilation and installation instructions),
 
 - [freetz-ble-python](freetz-ble-python/README.md): test Python code (running with freetz),
 

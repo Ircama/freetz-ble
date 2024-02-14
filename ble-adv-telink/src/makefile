@@ -27,7 +27,7 @@ LIBS :=  -llt_8258
 TEL_PATH := ..
 
 # Set Project Name
-PROJECT_NAME := at
+PROJECT_NAME := ble-adv-telink
 
 # 设置下载固件的串口号
 DOWNLOAD_PORT := /dev/ttyUSB0

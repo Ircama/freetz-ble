@@ -6,7 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: /Telink_825X_SDK/example/at/README.md
  -->
-# BLE-ADV Project
+# BLE-ADV-TELINK Project
 
 This code is based on [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) and is tested on a [Ai-Thinker TB-03F-KIT](https://docs.ai-thinker.com/_media/tb-03f-kit_specification_en.pdf).
 
@@ -64,10 +64,10 @@ All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored into
 # Compiling and installing
 
 - Copy the folder on a Linux system (Ubuntu). WSL is supported.
-- `cd ble-adv`
+- `cd ble-adv-telink`
 - `make`
 
-The produced firmware is `src/out/at.bin`.
+The produced firmware is `src/out/ble-adv-telink.bin`.
 
 To burn the firmware with a PC, connect the device via USB and use the software [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe) and check [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x). The same software can be used to test the AT commands.
 
