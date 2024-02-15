@@ -28,10 +28,6 @@
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
 
-extern void user_init_normal();
-extern void user_init_deepRetn();
-
-extern void main_loop (void);
 extern u8 baud_buf[];
 extern u8 ATE;
 extern u8 scan_type;
