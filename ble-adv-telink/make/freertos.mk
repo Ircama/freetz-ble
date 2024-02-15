@@ -21,4 +21,4 @@ $(OUT_PATH)/freertos/portable/Common/mpu_wrappers.o
 # Each subdirectory must supply rules for building sources it contributes
 $(OUT_PATH)/freertos/%.o: $(TEL_PATH)/components/freertos/%.c
 	@echo 'Building file: $<'
-	@tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"
+	@$(TC32_PATH)tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"

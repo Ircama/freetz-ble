@@ -12,4 +12,4 @@ OBJS += $(OUT_PATH)/tinyFlash/tinyFlash.o
 # Each subdirectory must supply rules for building sources it contributes
 $(OUT_PATH)/tinyFlash/%.o: $(TEL_PATH)/components/tinyFlash/%.c
 	@echo 'Building file: $<'
-	@tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"
+	@$(TC32_PATH)tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"

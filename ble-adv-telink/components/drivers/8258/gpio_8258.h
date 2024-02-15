@@ -178,7 +178,7 @@ static inline void gpio_set_output_en(GPIO_PinTypeDef pin, unsigned int value)
 		BM_CLR(reg_gpio_oen(pin), bit);
 	}
 }
-
+void gpio_set_func2(GPIO_PinTypeDef pin, GPIO_FuncTypeDef func);
 /**
  * @brief      This function set the input function of a pin.
  * @param[in]  pin - the pin needs to set the input function

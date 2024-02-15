@@ -109,7 +109,7 @@ typedef struct {
 	u8		conn_sn; // softwre rcrd sn to filter retry rx data
 
 
-	u8 		conn_btx_not_working;;
+	u8 		conn_btx_not_working;
 	u8		conn_rcvd_slave_pkt;
 	u8		peer_adr_type;
 	u8		rsvdd;

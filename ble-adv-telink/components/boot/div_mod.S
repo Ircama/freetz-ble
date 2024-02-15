@@ -171,6 +171,7 @@ MZ_MUL1_END:
 	tmov	r8, r4
 	tpop 	{r4, r5, r6, r7}
     tjex	lr
+
 #endif
 
 	//.section	.ram_code,"ax" //in ram code
@@ -329,9 +330,6 @@ MZ_MUL2_END:
 	tpop 	{r4, r5, r6, r7}
     tjex	lr
     tnop
-
-
-
 
 
 ///////// asm crc24 function 2

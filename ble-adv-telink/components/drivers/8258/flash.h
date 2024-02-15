@@ -70,13 +70,21 @@ typedef enum{
 _attribute_ram_code_ void flash_erase_sector(unsigned long addr);
 
 /**
- * @brief This function writes the buffer's content to a page.
- * @param[in]   addr the start address of the page
+ * @brief This function writes the buffer's content to a page (Warning: page < 256 bytes, write address not % 256). * @brief This function writes the buffer's content to a page.
  * @param[in]   len the length(in byte) of content needs to write into the page
  * @param[in]   buf the start address of the content needs to write into
  * @return none
  */
 _attribute_ram_code_ void flash_write_page(unsigned long addr, unsigned long len, unsigned char *buf);
+
+/**
+ * @brief This function write flash.
+ * @param[in]   addr the start address of the page
+ * @param[in]   len the length(in byte) of content needs to write into the page
+ * @param[in]   buf the start address of the content needs to write into
+ * @return none
+ */
+void flash_write(unsigned int addr, unsigned int len, unsigned char *buf);
 
 /**
  * @brief This function reads the content from a page to the buf.
@@ -87,8 +95,32 @@ _attribute_ram_code_ void flash_write_page(unsigned long addr, unsigned long len
  */
 _attribute_ram_code_ void flash_read_page(unsigned long addr, unsigned long len, unsigned char *buf);
 
+/**
+ * @brief This function serves to protect data for flash.
+ * @return none
+ */
+void flash_unlock(void);
+
+/**
+ * @brief	  flash ID.
+ * @param[in] buf - store MID of flash
+ * @return    none.
+ */
+void flash_read_id(unsigned char *buf);
+
+#if USE_FLASH_SERIAL_UID
+
+/**
+ * @brief	  Read UID.
+ * @param[in] buf   - store UID of flash
+ * @return    none.
+ */
+void flash_read_uid(unsigned char *buf);
+
+#endif
+
 /* according to your appliaction */
-#if 1
+#if 0
 /**
  * @brief     This function serves to erase a page(256 bytes).
  * @param[in] addr - the start address of the page needs to erase.
@@ -193,4 +225,5 @@ void flash_lock(Flash_TypeDef type , unsigned short data);
  * @return none
  */
 void flash_unlock(Flash_TypeDef type);
+
 #endif

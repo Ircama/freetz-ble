@@ -16,5 +16,5 @@ $(OUT_PATH)/vendor/common/tl_audio.o
 # Each subdirectory must supply rules for building sources it contributes
 $(OUT_PATH)/vendor/common/%.o: $(TEL_PATH)/components/vendor/common/%.c $(common_dir)
 	@echo 'Building file: $<'
-	@tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"
+	@$(TC32_PATH)tc32-elf-gcc $(GCC_FLAGS) $(INCLUDE_PATHS) -c -o"$@" "$<"
 

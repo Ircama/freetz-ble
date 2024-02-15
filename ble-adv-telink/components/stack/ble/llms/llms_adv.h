@@ -21,7 +21,7 @@
 
 
 /************************************ User Interface  ******************************************************/
-void 	blc_llms_initAdvertising_module(void);;
+void 	blc_llms_initAdvertising_module(void);
 
 
 

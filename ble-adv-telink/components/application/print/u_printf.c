@@ -209,12 +209,12 @@ int u_printf(const char *format, ...) {
 	static char my_printf_buff[1024] = { 0 };
 	char *out = &my_printf_buff[0];
 
-	extern void puts(char* s);
+	extern int puts(char* s);
 	
 	va_list args;
 	va_start(args, format );
 	print(&out, format, args);
-	puts(my_printf_buff);
+	return puts(my_printf_buff);
 }
 
 int u_sprintf(char *out, const char *format, ...) {
@@ -226,9 +226,9 @@ int u_sprintf(char *out, const char *format, ...) {
 void u_array_printf(unsigned char*data, unsigned int len) {
 	u_printf("{");
 	for(int i = 0; i < len; ++i){
-		u_printf("%X%s", data[i], i<(len)-1? ":":" ");
+		u_printf("%X%s", data[i], i<(len)-1? ":":"}");
 	}
-	u_printf("}\n");
+	u_printf("\n");
 }
 
 #endif

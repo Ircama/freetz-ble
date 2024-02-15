@@ -131,7 +131,7 @@ extern u32  blc_rcvd_connReq_tick;
 
 
 /******************************* User Interface  ************************************/
-void 		blc_ll_initAdvertising_module(u8 *public_adr);;
+void 		blc_ll_initAdvertising_module(u8 *public_adr);
 
 
 ble_sts_t	bls_ll_setAdvData(u8 *data, u8 len);

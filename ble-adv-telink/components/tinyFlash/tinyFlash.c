@@ -16,7 +16,7 @@ static unsigned long tinyFlash_End_Addr   = 0;
 static unsigned long tinyFlash_Used_Addr = 0; //当前使用的扇区地址
 static unsigned long tinyFlash_Swap_Addr = 0; //当前未使用的扇区地址
 
-void flash_write(unsigned long addr, unsigned long len, unsigned char *buf)
+void flash_write_org(unsigned long addr, unsigned long len, unsigned char *buf)
 {
     unsigned long tmp = addr & 0xff;
 
