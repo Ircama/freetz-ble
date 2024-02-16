@@ -63,19 +63,64 @@ All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored into
 
 # Compiling and installing
 
-- Copy the folder on a Linux system (Ubuntu). WSL is supported.
+- Copy the folder on a Linux system (Ubuntu). [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) is supported.
 - `cd ble-adv-telink`
 - `make`
 
 The produced firmware is `src/out/ble-adv-telink.bin`.
 
-To burn the firmware with a PC, connect the device via USB and use the software [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe) and check [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x). The same software can be used to test the AT commands.
+To burn the firmware with a PC, connect the device via USB and use either the *Telink_Tools.py* Python program, or the software [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe). Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x). The same software can be used to test the AT commands.
 
 - Select the appropriate COM port
 - press the button with "..." and select the firmware
 - press the right side button to the previously mentioned one "..."
 
 To enter an AT command, use the second tab. Select the port and bitrate, press the second button to connect the device, verify that the checkbox is selected.
+
+Burning via Python program (in this example the Ai-Thinker device is connected via USB to the virtual COM8 serial port of a PC):
+
+```
+python3 make\Telink_Tools.py --port com8 burn src\out\ble-adv-telink.bin
+```
+
+With WSL, install [USBIPD-WIN](https://learn.microsoft.com/windows/wsl/connect-usb#install-the-usbipd-win-project), then connect the USB device, run a CMD in Administration mode and issue:
+
+```
+usbipd list
+usbipd bind -b 1-5
+usbipd attach --wsl --busid 1-5
+```
+
+Notes: use the BUSID returned by `usbipd list`. Ignore the warning. Use *usbipd attach* each time the USB device is reconnected.
+
+Then, with WSL:
+
+```
+lsusb -tv
+python3 ../make/Telink_Tools.py --port /dev/ttyUSB0 burn out/ble-adv-telink.bin
+```
+
+# Test program
+
+```python
+import serial
+import time
+import sys
+
+ser = serial.serial_for_url(sys.argv[1], 115200)
+
+# Reset module
+time.sleep(0.05)
+ser.setDTR(True)
+ser.setRTS(True)
+time.sleep(0.05)
+ser.setDTR(False)
+ser.setRTS(False)
+
+while True:
+    data = ser.readline().decode().rstrip('\n')
+    print(data)
+```
 
 -----------------------------------------
 
