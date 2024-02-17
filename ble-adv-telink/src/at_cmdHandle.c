@@ -3,6 +3,7 @@
 #include "drivers.h"
 
 #include "stack/ble/ble.h"
+#include "vendor/common/blt_soft_timer.h"
 
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
@@ -314,7 +315,7 @@ static unsigned char atCmd_Mode(char *pbuf,  int mode, int lenth)
 	return 0;
 }
 
-static unsigned char Scan_Stop()
+static blt_timer_callback_t Scan_Stop()
 {
 	at_print("OK\r\n");
 	blt_soft_timer_delete(Scan_Stop);
@@ -329,22 +330,22 @@ static unsigned char atCmd_Scan(char *pbuf,  int mode, int lenth)
         scan_type = 0;
 		if(pbuf[0] == '1') {
             scan_type = 1;
-            printf("\r\+SCAN_SET_CONTINUOUS:%d\n\n", scan_type);
+            printf("\r\n+SCAN_SET_CONTINUOUS:%d\r\n", scan_type);
         }
 		if(pbuf[0] == '2') {
             scan_type = 2;
-            printf("\r\+SCAN_SET_AUTO:%d\n\n", scan_type);
+            printf("\r\n+SCAN_SET_AUTO:%d\r\n", scan_type);
         }
 		if(pbuf[0] == '3') {
             scan_type = 3;
-            printf("\r\+SCAN_SET_AUTO_FILTER:%d\n\n", scan_type);
+            printf("\r\n+SCAN_SET_AUTO_FILTER:%d\r\n", scan_type);
         }
         tinyFlash_Write(STORAGE_SCAN, &scan_type, 1);
     }
     u8 buff_len = 1;
     if(tinyFlash_Read(STORAGE_SCAN, &scan_type, &buff_len) == 0)
     {
-        printf("\r\+SCAN_TYPE:%d\n\n", scan_type);
+        printf("\r\n+SCAN_TYPE:%d\r\n", scan_type);
     }
 
 	if(device_mode == 1)
@@ -474,9 +475,10 @@ static unsigned char atCmd_Advdata(char *pbuf,  int mode, int lenth)
 	else if(mode == AT_CMD_MODE_SET)
 	{
 		if(lenth > 16) return 2;
-		tinyFlash_Write(STORAGE_ADVDATA, pbuf, lenth);
+		tinyFlash_Write(STORAGE_ADVDATA, (unsigned char*)pbuf, lenth);
 		return 0;
 	}
+    return 0;
 }
 
 //设置关闭间隙
@@ -496,9 +498,10 @@ static unsigned char atCmd_Advintv(char *pbuf,  int mode, int lenth)
 			interval = interval * 10 + (pbuf[0] - '0');
 			pbuf++;
 		}
-		tinyFlash_Write(STORAGE_ADVINTV, &interval, 2);
+		tinyFlash_Write(STORAGE_ADVINTV, (unsigned char*)&interval, 2);
 		return 0;
 	}
+    return 0;
 }
 
 //设置发射功率
@@ -524,6 +527,7 @@ static unsigned char atCmd_rf_power(char *pbuf,  int mode, int lenth)
 		}
 		return 2;
 	}
+    return 0;
 }
 
  extern u8 ibeacon_data[30];
@@ -548,9 +552,10 @@ static unsigned char atCmd_Ibeacon_UUID(char *pbuf,  int mode, int lenth)
 
 		memcpy(ibeacon_data+9, pbuf, 16);
 
-		tinyFlash_Write(STORAGE_IUUID, pbuf, 16);
+		tinyFlash_Write(STORAGE_IUUID, (unsigned char*)pbuf, 16);
 		return 0;
 	}
+    return 0;
 }
 
 //设置或者查询iBeacon Major
@@ -569,9 +574,10 @@ static unsigned char atCmd_Major(char *pbuf,  int mode, int lenth)
 
 		memcpy(ibeacon_data+25, pbuf, 2);
 
-		tinyFlash_Write(STORAGE_IMAJOR, &pbuf, 2);
+		tinyFlash_Write(STORAGE_IMAJOR, (unsigned char*)pbuf, 2);
 		return 0;
 	}
+    return 0;
 }
 
 //设置后者查询iBeacon Minor
@@ -589,9 +595,10 @@ static unsigned char atCmd_Minor(char *pbuf,  int mode, int lenth)
 		if(str2hex(pbuf, 4) == -1 ) return 2;
 
 		memcpy(ibeacon_data+27, pbuf, 2);
-		tinyFlash_Write(STORAGE_IMONOR, &pbuf, 2);
+		tinyFlash_Write(STORAGE_IMONOR, (unsigned char*)pbuf, 2);
 		return 0;
 	}
+    return 0;
 }
 
 //用于测试开发板
@@ -647,6 +654,7 @@ static unsigned char atCmd_Board_test(char *pbuf,  int mode, int lenth)
 		gpio_write(GPIO_PB4,0);
 		gpio_write(GPIO_PB5,1); WaitMs(200);
 	}
+return 0;
 }
 //读写命令
 _at_command_t gAtCmdTb_writeRead[] =

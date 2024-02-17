@@ -26,6 +26,7 @@
 
 #include "vendor/common/blt_led.h"
 #include "vendor/common/blt_common.h"
+#include "vendor/common/blt_soft_timer.h"
 #include "application/keyboard/keyboard.h"
 #include "application/usbstd/usbkeycode.h"
 #include "tinyFlash/tinyFlash.h"
@@ -192,7 +193,7 @@ _attribute_ram_code_ void user_set_rf_power (u8 e, u8 *p, int n)
 	rf_set_power_level_index (my_rf_power_array[user_rf_power_index]);
 }
 
-static unsigned char print_connect_state()
+static blt_timer_callback_t print_connect_state()
 {
 	blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 247);
 	blt_soft_timer_delete(print_connect_state);
