@@ -23,10 +23,10 @@
 #include "tl_common.h"
 #include "drivers.h"
 #include "stack/ble/ble.h"
+#include "vendor/common/blt_soft_timer.h"
 
 #include "vendor/common/blt_led.h"
 #include "vendor/common/blt_common.h"
-#include "vendor/common/blt_soft_timer.h"
 #include "application/keyboard/keyboard.h"
 #include "application/usbstd/usbkeycode.h"
 #include "tinyFlash/tinyFlash.h"
@@ -154,7 +154,7 @@ void app_switch_to_indirect_adv(u8 e, u8 *p, int n)
 	bls_ll_setAdvEnable(1);  //must: set adv enable
 }
 
-extern void at_print(unsigned char * str);
+extern void at_print(char * str);
 
 void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 {
@@ -183,7 +183,7 @@ void ble_remote_terminate(u8 e,u8 *p, int n) //*p is terminate reason
 
 	advertise_begin_tick = clock_time();
 
-	at_print((unsigned char *)"\r\n+BLE_DISCONNECTED\r\n");
+	at_print("\r\n+BLE_DISCONNECTED\r\n");
 
 	gpio_write(CONN_STATE_GPIO, 0);
 }
@@ -193,11 +193,11 @@ _attribute_ram_code_ void user_set_rf_power (u8 e, u8 *p, int n)
 	rf_set_power_level_index (my_rf_power_array[user_rf_power_index]);
 }
 
-static blt_timer_callback_t print_connect_state()
+void print_connect_state()
 {
 	blc_att_requestMtuSizeExchange(BLS_CONN_HANDLE, 247);
-	blt_soft_timer_delete(print_connect_state);
-	at_print((unsigned char *)"\r\n+BLE_CONNECTED\r\n");
+	blt_soft_timer_delete((blt_timer_callback_t)print_connect_state);
+	at_print("\r\n+BLE_CONNECTED\r\n");
 }
 
 void task_connect (u8 e, u8 *p, int n)
@@ -216,8 +216,8 @@ void task_connect (u8 e, u8 *p, int n)
 	gpio_write(CONN_STATE_GPIO, 1);
 	gpio_write(LOWPWR_STATE_GPIO, 1);//将低功耗状态指示置1
 
-	//at_print((unsigned char *)"\r\n+BLE_CONNECTED\r\n");
-	blt_soft_timer_add(&print_connect_state, 100000);
+	//at_print("\r\n+BLE_CONNECTED\r\n");
+	blt_soft_timer_add((blt_timer_callback_t)print_connect_state, 100000);
 
 	interval_update_tick = clock_time() | 1; //none zero
 }
@@ -339,7 +339,7 @@ void ble_slave_init_normal(void)
 
 ///////////////////// USER application initialization ///////////////////
 	my_scanRsp_len = 16;
-	if( tinyFlash_Read(STORAGE_ADVDATA, tbl_advData + 15, &my_scanRsp_len) == 0) //用户自定义厂商数据
+	if( tinyFlash_Read(STORAGE_ADVDATA, (unsigned char *)(tbl_advData + 15), &my_scanRsp_len) == 0) //用户自定义厂商数据
 	{
 	}
 	else //默认厂商数据为MAC地址，解决iOS设备无法获取MAC地址的问题
@@ -400,7 +400,7 @@ void ble_slave_init_normal(void)
 #endif
 	{
 		my_scanRsp_len = 2;
-		if(tinyFlash_Read(STORAGE_ADVINTV, &user_adv_interval_ms, &my_scanRsp_len) == 0) //读取用户是否设置广播间隙
+		if(tinyFlash_Read(STORAGE_ADVINTV, (unsigned char *)&user_adv_interval_ms, &my_scanRsp_len) == 0) //读取用户是否设置广播间隙
 		{
 			u16  interval = user_adv_interval_ms * 16; //广播间隙的值等于 mS数 * 1.6
 			interval = (u16)(interval / 10);

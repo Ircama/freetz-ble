@@ -54,14 +54,30 @@ static u16 host_update_conn_min;
 static u16 host_update_conn_latency;
 static u16 host_update_conn_timeout;
 static u32 connect_event_occurTick;
-static u32 mtuExchange_check_tick;
+//static u32 mtuExchange_check_tick;
 static u32 dle_started_flg;
 static u32 mtuExchange_started_flg;
-static u32 dongle_pairing_enable;
-static u32 dongle_unpair_enable;
+//static u32 dongle_pairing_enable;
+//static u32 dongle_unpair_enable;
 static u32 final_MTU_size = 23;
 _attribute_data_retention_ u32 cur_conn_device_hdl; //conn_handle
 
+// from app_uart.c:
+extern void at_print_array(char * data, u32 len);
+extern void at_send(char * data, u32 len);
+extern void at_print(char * str);
+
+#ifdef TEST_CODED_PHY
+#define	APP_ADV_SETS_NUMBER						1			// Number of Supported Advertising Sets
+#define APP_MAX_LENGTH_ADV_DATA					64			// Maximum Advertising Data Length,   (if legacy ADV, max length 31 bytes is enough)
+#define APP_MAX_LENGTH_SCAN_RESPONSE_DATA		31			// Maximum Scan Response Data Length, (if legacy ADV, max length 31 bytes is enough)
+
+static	u8	app_adv_set_param[ADV_SET_PARAM_LENGTH * APP_ADV_SETS_NUMBER]; // struct ll_ext_adv_t
+static	u8	app_primary_adv_pkt[MAX_LENGTH_PRIMARY_ADV_PKT * APP_ADV_SETS_NUMBER];
+static	u8	app_secondary_adv_pkt[MAX_LENGTH_SECOND_ADV_PKT * APP_ADV_SETS_NUMBER];
+static	u8	app_advData[APP_MAX_LENGTH_ADV_DATA	* APP_ADV_SETS_NUMBER];
+static	u8	app_scanRspData[APP_MAX_LENGTH_SCAN_RESPONSE_DATA * APP_ADV_SETS_NUMBER];
+#endif  //TEST_CODED_PHY
 
 int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 {
@@ -75,8 +91,9 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 	if(ptrL2cap->chanId == L2CAP_CID_ATTR_PROTOCOL)  //att data
 	{
 		rf_packet_att_t *pAtt = (rf_packet_att_t*)ptrL2cap;
-		u16 attHandle = pAtt->handle0 | pAtt->handle1<<8;
-
+#ifdef ATT_HANDLE
+        u16 attHandle = pAtt->handle0 | pAtt->handle1<<8;
+#endif
 		if(pAtt->opcode == ATT_OP_EXCHANGE_MTU_REQ || pAtt->opcode == ATT_OP_EXCHANGE_MTU_RSP)
 		{
 			rf_packet_att_mtu_exchange_t *pMtu = (rf_packet_att_mtu_exchange_t*)ptrL2cap;
@@ -97,19 +114,21 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 		}
 		else if(pAtt->opcode == ATT_OP_HANDLE_VALUE_NOTI)  //slave handle notify
 		{
-			// if(attHandle == SPP_HANDLE_DATA_S2C)
-			// {
-			// 	u8 len = pAtt->l2capLen - 3;
-			// 	if(len > 0)
-			// 	{
-			// 		printf("RF_RX len: %d\ns2c:notify data: %d\n", pAtt->rf_len, len);
-			// 		array_printf(pAtt->dat, len);
-			// 	}
-			// }
+#ifdef ATT_HANDLE
+			if(attHandle == SPP_HANDLE_DATA_S2C)
+			{
+			 	u8 len = pAtt->l2capLen - 3;
+			 	if(len > 0)
+			 	{
+			 		printf("RF_RX len: %d\ns2c:notify data: %d\n", pAtt->rf_len, len);
+					array_printf(pAtt->dat, len);
+			    }
+			}
+#endif
 			u8 len = pAtt->l2capLen - 3;
 
 			printf("+DATA:%d,", len);
-			at_send(pAtt->dat, len);
+			at_send((char *)pAtt->dat, len);
 			at_print("\r\n");	
 		}
 	}
@@ -157,17 +176,28 @@ int app_l2cap_handler (u16 conn_handle, u8 *raw_pkt)
 // event call back
 //////////////////////////////////////////////////////////
 extern u8 scan_type;
-int controller_event_callback (u32 h, u8 *p, int n)
+int controller_event_callback(u32 h, u8 *p, int n)
 {
 	// at_print_array(&h, 4);
 	// at_print(" controller_event_callback\n");
     
     u8 found = 0;
+#ifdef DEBUG_ADV
+    int adv_debug_type=0;
+#endif
 
 	if (h &HCI_FLAG_EVENT_BT_STD)		//ble controller hci event
 	{
 		u8 evtCode = h & 0xff;
-
+#ifdef DEBUG_ADV
+        u8 subEvt_code1 = p[0];
+        adv_debug_type = 0;
+        if (evtCode == HCI_EVT_LE_META)
+            adv_debug_type = 1;
+        if ( (subEvt_code1 == HCI_SUB_EVT_LE_ADVERTISING_REPORT) && (evtCode == HCI_EVT_LE_META) )
+            adv_debug_type = 2;
+        printf("%d, evtCode=%d, subEvt_code=%d, n=%d\n", adv_debug_type, evtCode, subEvt_code1, n);
+#endif
 		//------------ disconnect -------------------------------------
 		if(evtCode == HCI_EVT_DISCONNECTION_COMPLETE)  //connection terminate
 		{
@@ -232,7 +262,7 @@ int controller_event_callback (u32 h, u8 *p, int n)
 				event_adv_report_t *pa = (event_adv_report_t *)p;
 				s8 rssi = pa->data[pa->len];
 
-				if(rssi == 0) return;
+				if(rssi == 0) return 1;
 
                 found = 0;
                 if ((pa->mac[5] == 0xA4) && (pa->mac[4] == 0xC1) && (pa->mac[3] == 0x38))  // Telink Semiconductor (Taipei) Co. Ltd
@@ -265,18 +295,19 @@ int controller_event_callback (u32 h, u8 *p, int n)
                 
                 if ((scan_type != 3) || found) {
                     printf("+ADV:%d,%02X%02X%02X%02X%02X%02X,", rssi,pa->mac[5],pa->mac[4],pa->mac[3],pa->mac[2],pa->mac[1],pa->mac[0]);
-                    at_print_array(pa->data, pa->len);				
+                    at_print_array((char *)pa->data, pa->len);				
                     at_print("\r\n");
                 }
 			}
 			//--------hci le event: le data length change event ----------------------------------------
 			else if (subEvt_code == HCI_SUB_EVT_LE_DATA_LENGTH_CHANGE)
 			{
-				hci_le_dataLengthChangeEvt_t* dle_param = (hci_le_dataLengthChangeEvt_t*)p;
-				// printf("----- DLE exchange: -----\n");
-				// printf("Effective Max Rx Octets: %d\n", dle_param->maxRxOct);
-				// printf("Effective Max Tx Octets: %d\n", dle_param->maxTxOct);
-
+#ifdef DATA_LENGTH_CHANGE
+                hci_le_dataLengthChangeEvt_t* dle_param = (hci_le_dataLengthChangeEvt_t*)p;
+				printf("----- DLE exchange: -----\n");
+				printf("Effective Max Rx Octets: %d\n", dle_param->maxRxOct);
+				printf("Effective Max Tx Octets: %d\n", dle_param->maxTxOct);
+#endif
 				dle_started_flg = 1;
 			}	
 		}
@@ -303,6 +334,29 @@ void ble_master_init_normal(void)
 	blc_ll_initConnection_module();						//connection module  mandatory for BLE slave/master
 	blc_ll_initMasterRoleSingleConn_module();			//master module: 	 mandatory for BLE master,
 
+
+#ifdef TEST_CODED_PHY
+    blc_ll_init2MPhyCodedPhy_feature();                            // Coded PHY
+    blc_ll_setPhy(BLM_CONN_HANDLE, PHY_TRX_PREFER, PHY_PREFER_CODED, PHY_PREFER_CODED, CODED_PHY_PREFER_S8);
+    blc_ll_setDefaultConnCodingIndication(CODED_PHY_PREFER_S8);    // set Default Connection Coding
+    blc_ll_initChannelSelectionAlgorithm_2_feature();              // set CSA2
+
+
+    blc_ll_initExtendedAdvertising_module(app_adv_set_param, app_primary_adv_pkt, APP_ADV_SETS_NUMBER);
+    blc_ll_initExtSecondaryAdvPacketBuffer(app_secondary_adv_pkt, MAX_LENGTH_SECOND_ADV_PKT);
+    blc_ll_initExtAdvDataBuffer(app_advData, APP_MAX_LENGTH_ADV_DATA);
+    blc_ll_initExtScanRspDataBuffer(app_scanRspData, APP_MAX_LENGTH_SCAN_RESPONSE_DATA);
+    // if Coded PHY is used, this API set default S2/S8 mode for Extended ADV
+    blc_ll_setDefaultExtAdvCodingIndication(ADV_HANDLE0, CODED_PHY_PREFER_S8);
+    // patch, set advertise prepare user cb (app_advertise_prepare_handler)
+    blc_ll_setDefaultPhy(PHY_TRX_PREFER, BLE_PHY_CODED, BLE_PHY_CODED);
+
+    blc_ll_setExtScanParam_1_phy(
+        OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY, 5, \
+        SCAN_TYPE_PASSIVE,  SCAN_INTERVAL_100MS,   80
+    );
+#endif
+
 	rf_set_power_level_index (RF_POWER_P3p01dBm);
 
 	////// Host Initialization  //////////
@@ -314,11 +368,16 @@ void ble_master_init_normal(void)
 	blc_hci_setEventMask_cmd (HCI_EVT_MASK_DISCONNECTION_COMPLETE | HCI_EVT_MASK_ENCRYPTION_CHANGE);
 
 	//bluetooth low energy(LE) event
-	blc_hci_le_setEventMask_cmd(  HCI_LE_EVT_MASK_CONNECTION_COMPLETE  \
-							    | HCI_LE_EVT_MASK_ADVERTISING_REPORT \
-							    | HCI_LE_EVT_MASK_CONNECTION_UPDATE_COMPLETE \
-							    | HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE \
-							    | HCI_LE_EVT_MASK_CONNECTION_ESTABLISH ); //connection establish: telink private event
+	blc_hci_le_setEventMask_cmd(
+        HCI_LE_EVT_MASK_CONNECTION_COMPLETE
+        | HCI_LE_EVT_MASK_ADVERTISING_REPORT
+        | HCI_LE_EVT_MASK_CONNECTION_UPDATE_COMPLETE
+#ifdef TEST_CODED_PHY
+        | HCI_LE_EVT_MASK_EXTENDED_ADVERTISING_REPORT
+#endif
+        | HCI_LE_EVT_MASK_DATA_LENGTH_CHANGE
+        | HCI_LE_EVT_MASK_CONNECTION_ESTABLISH
+    ); //connection establish: telink private event
 
 	//ATT initialization
 	blc_att_setRxMtuSize(MTU_SIZE_SETTING); //If not set RX MTU size, default is: 23 bytes.

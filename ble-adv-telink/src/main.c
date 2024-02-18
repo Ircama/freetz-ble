@@ -27,11 +27,27 @@
 #include "vendor/common/blt_soft_timer.h"
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
+#include "app_uart.h"
 
-extern u8 baud_buf[];
-extern u8 ATE;
-extern u8 scan_type;
 u32 device_mode;
+
+// from in app_uart.c
+extern u8 ATE;
+extern u8 baud_buf[];
+extern void app_uart_loop();
+extern void my_gpio_init(void);
+extern void app_uart_init(AT_BAUD baud);
+extern void app_uart_irq_proc(void);
+
+// from in app_master.c
+extern void ble_master_mainloop(void);
+extern void ble_master_init_normal(void);
+extern _attribute_ram_code_ void ble_master_init_deepRetn(void);
+
+// from in app.c
+extern u8 scan_type;
+extern void ble_slave_init_normal(void);
+extern _attribute_ram_code_ void ble_slave_init_deepRetn(void);
 
 _attribute_ram_code_ void irq_handler(void)
 {
@@ -73,7 +89,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 		tinyFlash_Read(STORAGE_ATE, &ATE, &len); //读取ATE
 		
 		len =1;
-		tinyFlash_Read(STORAGE_MODE, &device_mode, &len); //读取ATE
+		tinyFlash_Read(STORAGE_MODE, (unsigned char *)&device_mode, &len); //读取ATE
 	}
 	app_uart_init(baud_buf[0]);  //初始化串口
 
@@ -112,7 +128,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
     u8 buff_len = 1;
     if(tinyFlash_Read(STORAGE_SCAN, &scan_type, &buff_len) == 0)
     {
-        printf("\r\+SCAN_TYPE_INIT:%d\n\n", scan_type);
+        printf("\r\n+SCAN_TYPE_INIT:%d\r\n", scan_type);
         if ((scan_type == 2) || (scan_type == 3)) {
 
             gpio_set_func(GPIO_PC2, AS_GPIO);

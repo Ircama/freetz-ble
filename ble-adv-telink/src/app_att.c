@@ -85,7 +85,7 @@ static const u8 my_PnPtrs [] = {0x02, 0x8a, 0x24, 0x66, 0x82, 0x01, 0x00};
 //////////////////////// OTA  ////////////////////////////////////////////////////
 static const  u8 my_OtaUUID[16]					    = TELINK_SPP_DATA_OTA;
 static const  u8 my_OtaServiceUUID[16]				= TELINK_OTA_UUID_SERVICE;
-static u8 my_OtaData 						        = 0x00;
+//static u8 my_OtaData 						        = 0x00;
 static const  u8 my_OtaName[] 						= {'O', 'T', 'A'};
 
 ////////////////////// SPP ////////////////////////////////////
@@ -102,7 +102,7 @@ static u8 SppDataServer2ClientDataCCC[2]  				= {0};
 static u8 SppData_1[1] 					= {0};  //SppDataServer2ClientData[20]
 // Spp data from Client to Server characteristic variables
 //this array will not used for receiving data(data processed by Attribute Write CallBack function), so cut array length from 20 to 1, saving some SRAM
-static u8 SppData_2[1] 					= {0};  //SppDataClient2ServerData[20]
+//static u8 SppData_2[1] 					= {0};  //SppDataClient2ServerData[20]
 
 
 //SPP data descriptor

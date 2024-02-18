@@ -11,6 +11,7 @@
 #include "blt_fw_sign.h"
 #include "stack/ble/blt_config.h"
 #include "proj_lib/firmware_encrypt.h"
+int flash_read_mid_uid_with_check( unsigned int *flash_mid ,unsigned char *flash_uid);
 
 void blt_firmware_signature_check(void)
 {

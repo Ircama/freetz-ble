@@ -14,6 +14,7 @@ extern  const u8 tbl_scanRsp[];
 extern u8 my_scanRsp[32];
 extern u8 ATE;
 extern u8  mac_public[6];
+extern void lsleep_enable();
 
 int str2hex(char * pbuf, int len)
 {
@@ -49,28 +50,28 @@ int str2hex(char * pbuf, int len)
 /* 经过data_process_parse函数分析执行下列函数 */
 
 //关回显 回显即 将指令重复并输出结果
-static unsigned char atCmd_ATE0(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_ATE0(char *pbuf,  int mode, int length)
 {
 	ATE = 0;
 	tinyFlash_Write(STORAGE_ATE, &ATE, 1);
 	return 0;
 }
 //开回显 回显即 将指令重复并输出结果
-static unsigned char atCmd_ATE1(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_ATE1(char *pbuf,  int mode, int length)
 {
 	ATE = 1;
 	tinyFlash_Write(STORAGE_ATE, &ATE, 1);
 	return 0;
 }
 //获取AT版本
-static unsigned char atCmd_GMR(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_GMR(char *pbuf,  int mode, int length)
 {
 	
 	at_print("\r\n+VER:"AT_VERSION);
 	return 0;
 }
 //重启
-static unsigned char atCmd_Reset(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Reset(char *pbuf,  int mode, int length)
 {
 	at_print("\r\nOK\r\n");
 	start_reboot();
@@ -78,7 +79,7 @@ static unsigned char atCmd_Reset(char *pbuf,  int mode, int lenth)
 }
 //睡眠
 extern  GPIO_PinTypeDef UART_RX_PIN;
-static unsigned char atCmd_Sleep(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Sleep(char *pbuf,  int mode, int length)
 {
 	at_print("\r\nOK\r\n");
 
@@ -96,7 +97,7 @@ static unsigned char atCmd_Sleep(char *pbuf,  int mode, int lenth)
 
 //轻度睡眠，保持蓝牙及连接功能
 extern u8 lsleep_model;
-static unsigned char  atCmd_LSleep(char *pbuf,  int mode, int lenth)
+static unsigned char  atCmd_LSleep(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -129,7 +130,7 @@ static unsigned char  atCmd_LSleep(char *pbuf,  int mode, int lenth)
 	}
 }
 //恢复出厂设置并重启
-static unsigned char atCmd_Restore(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Restore(char *pbuf,  int mode, int length)
 {
 	tinyFlash_Format();
 	at_print("\r\nOK\r\n");
@@ -137,7 +138,7 @@ static unsigned char atCmd_Restore(char *pbuf,  int mode, int lenth)
 	return 0;
 }
 //波特率
-static unsigned char atCmd_Baud(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Baud(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -161,7 +162,7 @@ static unsigned char atCmd_Baud(char *pbuf,  int mode, int lenth)
 	return 1;
 }
 //名字
-static unsigned char atCmd_Name(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Name(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -169,11 +170,11 @@ static unsigned char atCmd_Name(char *pbuf,  int mode, int lenth)
 
 		if(my_scanRsp[1] == 0x09) //客户自定义的蓝牙设备名称
 		{
-			at_send(my_scanRsp+2, my_scanRsp[0] -1);
+			at_send((char *) (my_scanRsp+2), my_scanRsp[0] -1);
 		}
 		else
 		{
-			at_send(tbl_scanRsp+2, 10);
+			at_send((char *) (tbl_scanRsp+2), 10);
 		}
 
 		return 0;
@@ -181,13 +182,13 @@ static unsigned char atCmd_Name(char *pbuf,  int mode, int lenth)
 
 	if(mode == AT_CMD_MODE_SET)
 	{
-		tinyFlash_Write(STORAGE_NAME, (unsigned char*)pbuf, lenth);
+		tinyFlash_Write(STORAGE_NAME, (unsigned char*)pbuf, length);
 		return 0;
 	}
 	return 1;
 }
 //MAC地址
-static unsigned char atCmd_Mac(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Mac(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -197,7 +198,7 @@ static unsigned char atCmd_Mac(char *pbuf,  int mode, int lenth)
 
 	if(mode == AT_CMD_MODE_SET)
 	{
-		if(lenth != 12) 
+		if(length != 12) 
 		{
 			at_print("len error\r\n");
 			return 2;
@@ -228,7 +229,7 @@ static unsigned char atCmd_Mac(char *pbuf,  int mode, int lenth)
 
 /*读取某片Flash数据到全局变量，主要用于调试tinyFlash*/
 unsigned long r_addr = 0;
-static unsigned char atCmd_Read(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Read(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_SET)
 	{
@@ -269,7 +270,7 @@ static unsigned char atCmd_Read(char *pbuf,  int mode, int lenth)
 
 extern u32 device_in_connection_state; //从机状态下已被连接标志位
 extern u32 cur_conn_device_hdl;//主机状态下已建立连接标志位
-static unsigned char atCmd_State(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_State(char *pbuf,  int mode, int length)
 {
 	if((device_in_connection_state ==0) && (cur_conn_device_hdl == 0))
 	{
@@ -284,7 +285,7 @@ static unsigned char atCmd_State(char *pbuf,  int mode, int lenth)
 
 //设置主机模式或者从机模式 0:从机模式，1:主机模式,重启后生效
 extern u32 device_mode;
-static unsigned char atCmd_Mode(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Mode(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -315,15 +316,15 @@ static unsigned char atCmd_Mode(char *pbuf,  int mode, int lenth)
 	return 0;
 }
 
-static blt_timer_callback_t Scan_Stop()
+void Scan_Stop()
 {
 	at_print("OK\r\n");
-	blt_soft_timer_delete(Scan_Stop);
+	blt_soft_timer_delete((blt_timer_callback_t) Scan_Stop);
 	blc_ll_setScanEnable (BLC_SCAN_DISABLE, DUP_FILTER_DISABLE);
 }
 //蓝牙主机模式开始扫描
 extern u8 scan_type;
-static unsigned char atCmd_Scan(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Scan(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_SET)
 	{
@@ -357,7 +358,7 @@ static unsigned char atCmd_Scan(char *pbuf,  int mode, int lenth)
 		blc_ll_setScanEnable (BLC_SCAN_ENABLE, DUP_FILTER_DISABLE);
 
 		if (!scan_type)
-            blt_soft_timer_add(&Scan_Stop, 3000000);//3S
+            blt_soft_timer_add((blt_timer_callback_t) Scan_Stop, 3000000);//3S
 		return 0xff;
 	}
     at_print("\r\n+ERR:WRONG_DEVICE_MODE\r\n");
@@ -365,7 +366,7 @@ static unsigned char atCmd_Scan(char *pbuf,  int mode, int lenth)
 	return 2;
 }
 //主动断开连接
-static unsigned char atCmd_Disconnect(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Disconnect(char *pbuf,  int mode, int length)
 {
 	if(device_mode == 0)  //从机模式
 	{
@@ -379,12 +380,12 @@ static unsigned char atCmd_Disconnect(char *pbuf,  int mode, int lenth)
 	return 0;
 }
 //主动连接
-static unsigned char atCmd_Connect(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Connect(char *pbuf,  int mode, int length)
 {
 	//只有是主机模式且未建立连接才能发起连接
 	if((mode == AT_CMD_MODE_SET) && (device_mode == 1) && (cur_conn_device_hdl == 0))
 	{
-		if(lenth != 12) 
+		if(length != 12) 
 		{
 			at_print("len error\r\n");
 			return 2;
@@ -405,7 +406,7 @@ static unsigned char atCmd_Connect(char *pbuf,  int mode, int lenth)
 		pbuf[3] = pbuf[6];
 
 		blc_ll_createConnection( SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS, INITIATE_FP_ADV_SPECIFY,  \
-								0, pbuf, BLE_ADDR_PUBLIC, \
+								0, (unsigned char *)pbuf, BLE_ADDR_PUBLIC, \
 								CONN_INTERVAL_10MS, CONN_INTERVAL_10MS, 0, CONN_TIMEOUT_4S, \
 								0, 0xFFFF);
 	}
@@ -420,7 +421,7 @@ static unsigned char atCmd_Connect(char *pbuf,  int mode, int lenth)
 
 
 //AT+SEND=46,4646464646546\r\n
-static unsigned char atCmd_Send(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Send(char *pbuf,  int mode, int length)
 {
 	if((device_in_connection_state == 0) && (cur_conn_device_hdl == 0)) //如果蓝牙未连接,或者未开启Notify
 	{
@@ -442,7 +443,7 @@ static unsigned char atCmd_Send(char *pbuf,  int mode, int lenth)
 		}
 
 		//检验长度是否一致
-		if((len + (data - pbuf)) != lenth)
+		if((len + (data - pbuf)) != length)
 		{
 			return 2;
 		}
@@ -464,26 +465,26 @@ static unsigned char atCmd_Send(char *pbuf,  int mode, int lenth)
 }
 
 extern u8 tbl_advData[];
-static unsigned char atCmd_Advdata(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Advdata(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
 		at_print("\r\n+ADVDATA:");
-		at_send(tbl_advData+15, tbl_advData[13] -1);
+		at_send((char *)(tbl_advData+15), tbl_advData[13] -1);
 		return 0;
 	}
 	else if(mode == AT_CMD_MODE_SET)
 	{
-		if(lenth > 16) return 2;
-		tinyFlash_Write(STORAGE_ADVDATA, (unsigned char*)pbuf, lenth);
+		if(length > 16) return 2;
+		tinyFlash_Write(STORAGE_ADVDATA, (unsigned char *)pbuf, length);
 		return 0;
 	}
-    return 0;
+    return -1;
 }
 
 //设置关闭间隙
 extern u16 user_adv_interval_ms;
-static unsigned char atCmd_Advintv(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Advintv(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -493,21 +494,21 @@ static unsigned char atCmd_Advintv(char *pbuf,  int mode, int lenth)
 	else if(mode == AT_CMD_MODE_SET)
 	{
 		u16 interval = 0;
-		while(lenth--)
+		while(length--)
 		{
 			interval = interval * 10 + (pbuf[0] - '0');
 			pbuf++;
 		}
-		tinyFlash_Write(STORAGE_ADVINTV, (unsigned char*)&interval, 2);
+		tinyFlash_Write(STORAGE_ADVINTV, (unsigned char *)&interval, 2);
 		return 0;
 	}
-    return 0;
+    return -1;
 }
 
 //设置发射功率
 extern u8 user_rf_power_index;
 void user_set_rf_power (u8 e, u8 *p, int n);
-static unsigned char atCmd_rf_power(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_rf_power(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -527,12 +528,12 @@ static unsigned char atCmd_rf_power(char *pbuf,  int mode, int lenth)
 		}
 		return 2;
 	}
-    return 0;
+    return -1;
 }
 
  extern u8 ibeacon_data[30];
 //设置或者查询iBeacon UUID
-static unsigned char atCmd_Ibeacon_UUID(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Ibeacon_UUID(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -546,20 +547,20 @@ static unsigned char atCmd_Ibeacon_UUID(char *pbuf,  int mode, int lenth)
 	}
 	else if(mode == AT_CMD_MODE_SET)
 	{
-		if(lenth != 32) return 2;
+		if(length != 32) return 2;
 
 		if(str2hex(pbuf, 32) == -1 ) return 2;
 
 		memcpy(ibeacon_data+9, pbuf, 16);
 
-		tinyFlash_Write(STORAGE_IUUID, (unsigned char*)pbuf, 16);
+		tinyFlash_Write(STORAGE_IUUID, (unsigned char *)pbuf, 16);
 		return 0;
 	}
-    return 0;
+    return -1;
 }
 
 //设置或者查询iBeacon Major
-static unsigned char atCmd_Major(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Major(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -568,20 +569,20 @@ static unsigned char atCmd_Major(char *pbuf,  int mode, int lenth)
 	}
 	else if(mode == AT_CMD_MODE_SET)
 	{
-		if(lenth != 4) return 2;
+		if(length != 4) return 2;
 
 		if(str2hex(pbuf, 4) == -1 ) return 2;
 
 		memcpy(ibeacon_data+25, pbuf, 2);
 
-		tinyFlash_Write(STORAGE_IMAJOR, (unsigned char*)pbuf, 2);
+		tinyFlash_Write(STORAGE_IMAJOR, (unsigned char *)pbuf, 2);
 		return 0;
 	}
-    return 0;
+    return -1;
 }
 
 //设置后者查询iBeacon Minor
-static unsigned char atCmd_Minor(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Minor(char *pbuf,  int mode, int length)
 {
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -590,19 +591,19 @@ static unsigned char atCmd_Minor(char *pbuf,  int mode, int lenth)
 	}
 	else if(mode == AT_CMD_MODE_SET)
 	{
-		if(lenth != 4) return 2;
+		if(length != 4) return 2;
 
 		if(str2hex(pbuf, 4) == -1 ) return 2;
 
 		memcpy(ibeacon_data+27, pbuf, 2);
-		tinyFlash_Write(STORAGE_IMONOR, (unsigned char*)pbuf, 2);
+		tinyFlash_Write(STORAGE_IMONOR, (unsigned char *)pbuf, 2);
 		return 0;
 	}
-    return 0;
+    return -1;
 }
 
 //用于测试开发板
-static unsigned char atCmd_Board_test(char *pbuf,  int mode, int lenth)
+static unsigned char atCmd_Board_test(char *pbuf,  int mode, int length)
 {
 	gpio_set_func(GPIO_PC2, AS_GPIO);
 	gpio_set_func(GPIO_PC3, AS_GPIO);
@@ -654,7 +655,7 @@ static unsigned char atCmd_Board_test(char *pbuf,  int mode, int lenth)
 		gpio_write(GPIO_PB4,0);
 		gpio_write(GPIO_PB5,1); WaitMs(200);
 	}
-return 0;
+    return 0;
 }
 //读写命令
 _at_command_t gAtCmdTb_writeRead[] =

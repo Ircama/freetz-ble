@@ -23,6 +23,7 @@
 #include "drivers.h"
 #include "stack/ble/ble.h"
 #include "at_cmd.h"
+#include "app_uart.h"
 
 #define UART_DATA_LEN    12+256     //data max ?    (UART_DATA_LEN+4) must 16 byte aligned
 
@@ -56,25 +57,12 @@ _attribute_data_retention_  u8 ATE = 0;
 
 _attribute_data_retention_  GPIO_PinTypeDef UART_RX_PIN = 0;
 
-typedef enum {
-    AT_BAUD_2400 = 0,
-	AT_BAUD_4800,
-	AT_BAUD_9600,
-	AT_BAUD_19200,
-	AT_BAUD_38400,
-	AT_BAUD_57600,
-	AT_BAUD_115200,
-	AT_BAUD_230400,
-	AT_BAUD_460800,
-	AT_BAUD_921600,
-} AT_BAUD;
-
 void app_uart_init(AT_BAUD baud)
 {
 	//WaitMs(100);  //leave enough time for SWS_reset when power on
 
 	//note: dma addr must be set first before any other uart initialization! (confirmed by sihui)
-	uart_recbuff_init( (unsigned short *)my_fifo_wptr(&uart_rx_fifo), UART_DATA_LEN);
+	uart_recbuff_init( (unsigned char *)my_fifo_wptr(&uart_rx_fifo), UART_DATA_LEN);
 
 	gpio_set_func(UART_RX_PA0, AS_GPIO);//TB-02/TB-03F/TB-04
 	gpio_set_func(UART_RX_PB0, AS_GPIO);//TB-01
@@ -245,7 +233,11 @@ void at_send(char * data, u32 len)
 	}
 }
 
-void puts(char *s) { at_print(s); }
+int puts(char *s)
+{
+    at_print(s);
+    return 0;
+}
 
 
 extern u32 device_in_connection_state;
@@ -284,7 +276,7 @@ uart_data_t * p = NULL;
 //用户层UART循环收发数据
 void app_uart_loop()
 {
-	if(data = my_fifo_get(&uart_rx_fifo)) //从fifo中获取数据
+	if( (data = my_fifo_get(&uart_rx_fifo)) ) //从fifo中获取数据
 	{
 		p = (uart_data_t *)data;
 
