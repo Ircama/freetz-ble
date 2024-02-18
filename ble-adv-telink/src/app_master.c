@@ -183,6 +183,8 @@ int controller_event_callback(u32 h, u8 *p, int n)
     
     u8 found = 0;
 #ifdef DEBUG_ADV
+#pragma message ( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> DEBUG_ADV enabled" )
+    printf("ADV DEBUG - ");
     int adv_debug_type=0;
 #endif
 
@@ -303,6 +305,7 @@ int controller_event_callback(u32 h, u8 *p, int n)
 			else if (subEvt_code == HCI_SUB_EVT_LE_DATA_LENGTH_CHANGE)
 			{
 #ifdef DATA_LENGTH_CHANGE
+#pragma message ( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> DATA_LENGTH_CHANGE enabled" )
                 hci_le_dataLengthChangeEvt_t* dle_param = (hci_le_dataLengthChangeEvt_t*)p;
 				printf("----- DLE exchange: -----\n");
 				printf("Effective Max Rx Octets: %d\n", dle_param->maxRxOct);
@@ -336,6 +339,7 @@ void ble_master_init_normal(void)
 
 
 #ifdef TEST_CODED_PHY
+#pragma message ( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> TEST_CODED_PHY enabled" )
     blc_ll_init2MPhyCodedPhy_feature();                            // Coded PHY
     blc_ll_setPhy(BLM_CONN_HANDLE, PHY_TRX_PREFER, PHY_PREFER_CODED, PHY_PREFER_CODED, CODED_PHY_PREFER_S8);
     blc_ll_setDefaultConnCodingIndication(CODED_PHY_PREFER_S8);    // set Default Connection Coding

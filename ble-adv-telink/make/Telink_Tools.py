@@ -14,6 +14,9 @@ import time
 import zlib
 import string
 
+if os.name == 'nt':
+    os.system("")
+
 try:
     import serial
 except ImportError:
@@ -39,7 +42,7 @@ except ImportError:
           "Check the README for installation instructions." % (sys.VERSION, sys.executable))
     raise
 
-__version__ = "0.4 dev"
+__version__ = "0.4.1 dev"
 
 PYTHON2 = sys.version_info[0] < 3  # True if on pre-Python 3
 
@@ -356,8 +359,8 @@ def main(custom_commandline=None):
     _port.close()
 
 def _main():
-    print("-- EN: Please download the Ai-Thinker Bootload Firware to the board first . \033[3;32m\033[0m") #921600
-    print("-- CH: 烧录前务必确定烧录安信可科技制作的bootload固件（官方正品出厂前已烧录）。\033[3;32m\033[0m") #921600
+    #print("-- EN: Please download the Ai-Thinker Bootload Firware to the board first . \033[3;32m\033[0m") #921600
+    #print("-- CH: 烧录前务必确定烧录安信可科技制作的bootload固件（官方正品出厂前已烧录）。\033[3;32m\033[0m") #921600
     
     # try:
     main()

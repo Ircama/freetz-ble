@@ -67,6 +67,8 @@ All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored into
 - `cd ble-adv-telink`
 - `make`
 
+Switches can be passed with CFLAGS; e.g., `make CFLAGS="-D... -D..."`.
+
 The produced firmware is `src/out/ble-adv-telink.bin`.
 
 To burn the firmware with a PC, connect the device via USB and use either the *Telink_Tools.py* Python program, or the software [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe). Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x). The same software can be used to test the AT commands.
@@ -77,7 +79,7 @@ To burn the firmware with a PC, connect the device via USB and use either the *T
 
 To enter an AT command, use the second tab. Select the port and bitrate, press the second button to connect the device, verify that the checkbox is selected.
 
-Burning via Python program (in this example the Ai-Thinker device is connected via USB to the virtual COM8 serial port of a PC):
+Burning via Python program with Windows (in this example the Ai-Thinker device is connected via USB to the virtual COM8 serial port of a PC):
 
 ```
 python3 make\Telink_Tools.py --port com8 burn src\out\ble-adv-telink.bin
@@ -99,6 +101,8 @@ Then, with WSL:
 lsusb -tv
 python3 ../make/Telink_Tools.py --port /dev/ttyUSB0 burn out/ble-adv-telink.bin
 ```
+
+The *Telink_Tools.py* program will NOT work on freetz (the freetz device driver does not support sending ascii 0 characters).
 
 # Test program
 
