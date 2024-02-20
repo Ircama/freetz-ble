@@ -85,7 +85,7 @@ UART_BOOT:= $(TEL_PATH)/components/TB-02_boot_V0.5.bin
 SIZEDUMMY := sizedummy
 
 # All Target
-all: pre-build main-build
+all: cross-compiler pre-build main-build
 
 # Main-build Target
 main-build: $(ELF_FILE) secondary-outputs
@@ -121,8 +121,11 @@ clean:
 	-$(RM) $(FLASH_IMAGE) $(ELFS) $(OBJS) $(LST) $(SIZEDUMMY) $(ELF_FILE) $(BIN_FILE) $(LST_FILE)
 	-@echo ' '
 
+cross-compiler:
+	@test -d $(TEL_PATH)/SDK || (cd $(TEL_PATH); $(MAKE); exit)
+
 pre-build:
-	mkdir -p $(foreach s,$(OUT_DIR),$(OUT_PATH)$(s))
+	@mkdir -p $(foreach s,$(OUT_DIR),$(OUT_PATH)$(s))
 #-"D:\tel\ble_sdk_release/getver.sh"
 	-@echo ' '
 
