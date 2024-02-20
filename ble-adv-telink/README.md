@@ -126,6 +126,14 @@ while True:
     print(data)
 ```
 
+--------------
+
+Note: Coded PHY not working at the moment.
+
+The SDK in this repo is borrowed from https://github.com/pvvx/ATC_MiThermometer and https://github.com/atc1441/ATC_MiThermometer that possibly in turn reused the [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) (which might be based on the old Telink SDK 3.1 or 3.2).
+
+SDK documentation: https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tb/Telink%20Kite%20BLE%20SDK%20Developer%20Handbook.pdf
+
 -----------------------------------------
 
 # AT firmware design principle - Original description (English translation from Chinese)

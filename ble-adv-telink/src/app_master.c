@@ -69,7 +69,7 @@ extern void at_print(char * str);
 
 #ifdef TEST_CODED_PHY
 #define	APP_ADV_SETS_NUMBER						1			// Number of Supported Advertising Sets
-#define APP_MAX_LENGTH_ADV_DATA					64			// Maximum Advertising Data Length,   (if legacy ADV, max length 31 bytes is enough)
+#define APP_MAX_LENGTH_ADV_DATA					1024		// Maximum Advertising Data Length,   (if legacy ADV, max length 31 bytes is enough)
 #define APP_MAX_LENGTH_SCAN_RESPONSE_DATA		31			// Maximum Scan Response Data Length, (if legacy ADV, max length 31 bytes is enough)
 
 static	u8	app_adv_set_param[ADV_SET_PARAM_LENGTH * APP_ADV_SETS_NUMBER]; // struct ll_ext_adv_t
@@ -342,19 +342,41 @@ void ble_master_init_normal(void)
 #pragma message ( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> TEST_CODED_PHY enabled" )
     blc_ll_init2MPhyCodedPhy_feature();                            // Coded PHY
     blc_ll_setPhy(BLM_CONN_HANDLE, PHY_TRX_PREFER, PHY_PREFER_CODED, PHY_PREFER_CODED, CODED_PHY_PREFER_S8);
+
+    // patch, set advertise prepare user cb (app_advertise_prepare_handler)
+    blc_ll_setDefaultPhy(PHY_TRX_PREFER, BLE_PHY_CODED, BLE_PHY_CODED);
+
     blc_ll_setDefaultConnCodingIndication(CODED_PHY_PREFER_S8);    // set Default Connection Coding
     blc_ll_initChannelSelectionAlgorithm_2_feature();              // set CSA2
-
 
     blc_ll_initExtendedAdvertising_module(app_adv_set_param, app_primary_adv_pkt, APP_ADV_SETS_NUMBER);
     blc_ll_initExtSecondaryAdvPacketBuffer(app_secondary_adv_pkt, MAX_LENGTH_SECOND_ADV_PKT);
     blc_ll_initExtAdvDataBuffer(app_advData, APP_MAX_LENGTH_ADV_DATA);
     blc_ll_initExtScanRspDataBuffer(app_scanRspData, APP_MAX_LENGTH_SCAN_RESPONSE_DATA);
+
+	u32 my_adv_interval_min = ADV_INTERVAL_50MS;
+	u32 my_adv_interval_max = ADV_INTERVAL_50MS;
+
+	le_phy_type_t  user_primary_adv_phy;
+	le_phy_type_t  user_secondary_adv_phy;
+
+    // if Coded PHY is used, this API set default S2/S8 mode for Extended ADV
+    user_primary_adv_phy   = BLE_PHY_CODED;
+    //user_secondary_adv_phy = BLE_PHY_1M;
+    user_secondary_adv_phy = BLE_PHY_CODED;
     // if Coded PHY is used, this API set default S2/S8 mode for Extended ADV
     blc_ll_setDefaultExtAdvCodingIndication(ADV_HANDLE0, CODED_PHY_PREFER_S8);
-    // patch, set advertise prepare user cb (app_advertise_prepare_handler)
-    blc_ll_setDefaultPhy(PHY_TRX_PREFER, BLE_PHY_CODED, BLE_PHY_CODED);
 
+	blc_ll_setExtAdvParam( ADV_HANDLE0, 		ADV_EVT_PROP_EXTENDED_NON_CONNECTABLE_NON_SCANNABLE_UNDIRECTED, my_adv_interval_min, 			my_adv_interval_max,
+						   BLT_ENABLE_ADV_ALL,	OWN_ADDRESS_PUBLIC, 										    BLE_ADDR_PUBLIC, 				NULL,
+						   ADV_FP_NONE,  		TX_POWER_8dBm,												   	user_primary_adv_phy, 			0,
+						   user_secondary_adv_phy, 	ADV_SID_0, 													0);
+
+    blc_ll_setExtAdvEnable_1( BLC_ADV_ENABLE, 1, ADV_HANDLE0, 0 , 0);
+#endif
+
+#ifdef TEST_B_CODED_PHY
+#pragma message ( ">>>>>>>>>>>>>>>>>>>>>>>>>>>>> TEST_B_CODED_PHY enabled" )
     blc_ll_setExtScanParam_1_phy(
         OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY, 5, \
         SCAN_TYPE_PASSIVE,  SCAN_INTERVAL_100MS,   80

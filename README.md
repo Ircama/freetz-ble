@@ -7,14 +7,14 @@ The [BLE](https://wikipedia.org/wiki/Bluetooth_Low_Energy) stack is managed thro
 
 To configure a FRITZ!Box device in order to run this project, [freetz-ng](https://github.com/Freetz-NG/freetz-ng/) must be installed. [freetz](https://freetz.github.io/wiki/) is a [modified extension](https://de.wikipedia.org/wiki/Fritz!Box#Freetz) of the [AVM](https://en.wikipedia.org/wiki/AVM_GmbH) stock firmware.
 
-While [freetz](https://freetz-ng.github.io/) directly supports Bluetooth 2.0 USB adapters with BlueZ protocol stack (installing related packages), it cannot manage modern BLE 5.x devices (especially with support of [passive scanning](https://www.bluetooth.com/blog/advertising-works-part-1/) to preserve the sensor coin battery and [LE Coded PHY](https://www.bluetooth.com/learn-about-bluetooth/feature-enhancements) for longer range on sensors supporting this coding schema) due to the need of updated Linux kernel, with at least version 5.10 (current FRITZ!Box kernel is 4.9), and updated [BlueZ](https://www.bluez.org/), with at least version 5.56 (current BlueZ in freetz is the old 2.25).
+While [freetz](https://freetz-ng.github.io/) directly supports Bluetooth 2.0 USB adapters with BlueZ protocol stack (installing related packages), it cannot manage modern BLE 5.x devices (especially with support of [passive scanning](https://www.bluetooth.com/blog/advertising-works-part-1/) to preserve the sensor coin battery and [LE Coded PHY](https://www.bluetooth.com/learn-about-bluetooth/feature-enhancements)[^1] for longer range on sensors supporting this coding schema) due to the need of updated Linux kernel, with at least version 5.10 (current FRITZ!Box kernel is 4.9), and updated [BlueZ](https://www.bluez.org/), with at least version 5.56 (current BlueZ in freetz is the old 2.25).
 
 Using a BLE SoC chip interfaced via a USB-to-serial adapter, like the Ai-Thinker TB-03F-KIT, the Bluetooth stack is completely offloaded, saving kernel and user space resources, other than solving incompatibilities.
 
 The low-cost Ai-Thinker TB-03F-KIT includes a Telink [TLSR8253 BLE 5.0 SoC](https://wiki.telink-semi.cn/doc/ds/PB_TLSR8253-E_Product%20Brief%20for%20Telink%20BLE%20SoC%20TLSR8253.pdf). Main features of the module:
 
 - it completely offloads the BLE stack, offering USB serial port via CH340 USB-to-serial interface (and related driver is included in freetz),
-- it includes advanced BLE 5 support, comprehensive of passive scanning, Mesh, Coded PHY,
+- it includes advanced BLE 5 support, comprehensive of passive scanning, Mesh[^2], Coded PHY[^1],
 - it features 2 LEDs, a 3-color RGB LED, a reset button and a user-defined button,
 - it also provides configurable PWM, I2C, GPIO and ADC interfaces, so that, other than BLE, it can also connect the FRITZ!Box with local sensors (like, e.g., an I2C air quality sensor chip),
 - it allows to distance the BLE antenna from the FRITZ!Box, for reduced interferences.
@@ -58,3 +58,8 @@ Suggested `make menuconfig` configuration:
 - Busybox lsusb
 
 Move Python and all other possible packages to freetz External Processing.
+
+--------------
+
+[^1]: Coded PHY is not currently supported.
+[^2]: Mesh is not currently supported.
