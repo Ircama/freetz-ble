@@ -59,7 +59,5 @@ Suggested `make menuconfig` configuration:
 
 Move Python and all other possible packages to freetz External Processing.
 
---------------
-
 [^1]: Coded PHY is not currently supported.
 [^2]: Mesh is not currently supported.
