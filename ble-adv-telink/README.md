@@ -6,7 +6,7 @@
  * @Description: In User Settings Edit
  * @FilePath: /Telink_825X_SDK/example/at/README.md
  -->
-# BLE-ADV-TELINK Project
+# Ble-Adv-Telink Project
 
 This code is based on [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) and is tested on a [Ai-Thinker TB-03F-KIT](https://docs.ai-thinker.com/_media/tb-03f-kit_specification_en.pdf).
 
@@ -191,7 +191,6 @@ Output of the start of the advertising scan (`<n>` is the scan mode):
 
 ```
 +SCAN_TYPE:<n>
-
 ```
 
 Output of the start of the automatic advertising scan at boot (`<n>` is the scan mode):
@@ -208,9 +207,9 @@ Advertising data
 +ADV:<RSSI>,<MAC>,<ADV>
 ```
 
-`<RSSI>`: [RSSI](https://en.wikipedia.org/wiki/Received_signal_strength_indicator)
-`<MAC>`: BLE MAC Address (12 hex characters without ':')
-`<ADV>`: Advertisement data frame
+- `<RSSI>`: [RSSI](https://en.wikipedia.org/wiki/Received_signal_strength_indicator)
+- `<MAC>`: BLE MAC Address (12 hex characters without ':')
+- `<ADV>`: Advertisement data frame
 
 A BLE data fame is decoded as follows:
 
@@ -224,36 +223,36 @@ And this repeats over the whole raw data. You can find the meaning of raw data i
 
   1st Set:
 
-  02: Length: 2 Bytes
-  01: Type: Flags
-  06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
+  - 02: Length: 2 Bytes
+  - 01: Type: Flags
+  - 06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
 
   2nd Set:
 
-  11: Length: 17 bytes
-  06: Type: Incomplete List of 128-bit Service Class UUIDs
-  110677AE8C12719E7BB6E6113A2110E14121: characteristic 2141e110-213a-11e6-b67b-9e71128cae77 (AC Unit Management)
+  - 11: Length: 17 bytes
+  - 06: Type: Incomplete List of 128-bit Service Class UUIDs
+  - 110677AE8C12719E7BB6E6113A2110E14121: characteristic 2141e110-213a-11e6-b67b-9e71128cae77 (AC Unit Management)
 
   3rd Set:
 
-  07: Length: 9 bytes
-  08: Type: Shortened Local Name
-  4461696B696E: Daikin (Name of device in ASCII)
+  - 07: Length: 9 bytes
+  - 08: Type: Shortened Local Name
+  - 4461696B696E: Daikin (Name of device in ASCII)
 
 - Example: `0201061416d2fc4195b0efda789dd953b02600009341626f`:
 
   1st Set:
 
-  02: Length: 2 Bytes
-  01: Type: Flags
-  06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
+  - 02: Length: 2 Bytes
+  - 01: Type: Flags
+  - 06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
 
   2nd Set:
 
-  14: Length: 20 bytes
-  16: Type: Service Data - 16-bit UUID
-  FCB2: UUID
-  4195b0efda789dd953b02600009341626f: BT Home v2 format data
+  - 14: Length: 20 bytes
+  - 16: Type: Service Data - 16-bit UUID
+  - FCB2: UUID
+  - 4195b0efda789dd953b02600009341626f: BT Home v2 format data
 
   ```
     size = 20
