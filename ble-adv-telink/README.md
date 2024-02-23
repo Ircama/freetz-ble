@@ -61,7 +61,7 @@ Change the code *app_master.c* to edit the trailing parts of MAC addresses which
 
 All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored into the non-volatile RAM of the device.
 
-# Compiling and installing
+## Compiling and installing
 
 - Copy the folder on a Linux system (Ubuntu). [WSL](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) is supported.
 - `cd ble-adv-telink`
@@ -104,7 +104,7 @@ python3 ../make/Telink_Tools.py --port /dev/ttyUSB0 burn out/ble-adv-telink.bin
 
 The *Telink_Tools.py* program will NOT work on freetz (the freetz device driver does not support sending ascii 0 characters).
 
-# Test program
+## Test program
 
 ```python
 import serial
@@ -124,6 +124,180 @@ ser.setRTS(False)
 while True:
     data = ser.readline().decode().rstrip('\n')
     print(data)
+```
+
+## Return message formats
+
+### Boot return message
+
+```
+IRCAMA Ai-Thinker BLE AT V1.0.1
++READY
+```
+
+### Confirmation message
+
+Confirmation of command receipt:
+
+```
+OK
+```
+
+### +NAME
+
+Example of return message of `AT+NAME?`:
+
+```
++NAME:Ai-Thinker
+```
+
+### +MAC
+
+Example of return message of `AT+MAC?` (Telink Semiconductor MAC):
+
+```
++MAC:A4C138AABBCC
+```
+
+### +MODE
+
+Example of return message of `AT+MODE?`:
+
+```
++MODE:1
+```
+
+### Scan modes
+
+Output of `AT+SCAN=1`:
+
+```
++SCAN_SET_CONTINUOUS:1
+```
+
+Output of `AT+SCAN=2`:
+
+```
++SCAN_SET_AUTO:2
+```
+
+Output of `AT+SCAN=3`:
+
+```
++SCAN_SET_AUTO_FILTER:3
+```
+
+Output of the start of the advertising scan (`<n>` is the scan mode):
+
+```
++SCAN_TYPE:<n>
+
+```
+
+Output of the start of the automatic advertising scan at boot (`<n>` is the scan mode):
+
+```
++SCAN_TYPE_INIT:<n>
+```
+
+### +ADV
+
+Advertising data
+
+```
++ADV:<RSSI>,<MAC>,<ADV>
+```
+
+`<RSSI>`: [RSSI](https://en.wikipedia.org/wiki/Received_signal_strength_indicator)
+`<MAC>`: BLE MAC Address (12 hex characters without ':')
+`<ADV>`: Advertisement data frame
+
+A BLE data fame is decoded as follows:
+
+- 1st byte = length (n bytes)
+- 2nd byte = Types
+- n-1 bytes = actual data
+
+And this repeats over the whole raw data. You can find the meaning of raw data in the [2.3 "Common Data Types" paragraph](https://www.bluetooth.com/wp-content/uploads/Files/Specification/Assigned_Numbers.html#bookmark43) of the Assigned Numbers Bluetooth Document.
+
+- Example: `020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E`:
+
+  1st Set:
+
+  02: Length: 2 Bytes
+  01: Type: Flags
+  06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
+
+  2nd Set:
+
+  11: Length: 17 bytes
+  06: Type: Incomplete List of 128-bit Service Class UUIDs
+  110677AE8C12719E7BB6E6113A2110E14121: characteristic 2141e110-213a-11e6-b67b-9e71128cae77 (AC Unit Management)
+
+  3rd Set:
+
+  07: Length: 9 bytes
+  08: Type: Shortened Local Name
+  4461696B696E: Daikin (Name of device in ASCII)
+
+- Example: `0201061416d2fc4195b0efda789dd953b02600009341626f`:
+
+  1st Set:
+
+  02: Length: 2 Bytes
+  01: Type: Flags
+  06: Flag - 02 && 04: LE General Discoverable Mode, BR/EDR Not Supported. This means that the module producing the advertisement is configured as broadcaster, without connection/pairing
+
+  2nd Set:
+
+  14: Length: 20 bytes
+  16: Type: Service Data - 16-bit UUID
+  FCB2: UUID
+  4195b0efda789dd953b02600009341626f: BT Home v2 format data
+
+  ```
+    size = 20
+    uid = 22
+    UUID = b"\xfc\xd2" (total 2)
+    DevInfo = Container:
+        Version = 2
+        Reserved2 = 0
+        Trigger = False
+        Reserved1 = 0
+        Encryption = True
+    data_point = Container:
+        count_id = 9904
+        payload = ListContainer:
+            Container:
+                bt_home_v2_type = (enum) BtHomeID_battery 1
+                data = Container:
+                    battery_level = 80
+                    battery_level_unit = u"%" (total 1)
+            Container:
+                bt_home_v2_type = (enum) BtHomeID_temperature 2
+                data = Container:
+                    temperature = 19.2
+                    temperature_unit = u"°C" (total 2)
+            Container:
+                bt_home_v2_type = (enum) BtHomeID_humidity 3
+                data = Container:
+                    humidity = 62.22
+                    humidity_unit = u"%" (total 1)
+  ```
+
+Example of output with `AT+SCAN=2`:
+
+```
+IRCAMA Ai-Thinker BLE AT V1.0.1
++READY
+
++SCAN_TYPE_INIT:2
++ADV:-97,30F94BA4F247,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
++ADV:-90,30F94BA51C5D,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
++ADV:-93,30F94BA4A1A0,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
++ADV:-99,30F94BA521D2,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
++ADV:-94,30F94BA524DE,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
+...
 ```
 
 --------------

@@ -1,4 +1,4 @@
-# freetz-ble
+# Freetz-Ble
 __BLE Advertisement controller for freetz (FRITZ!Box)__
 
 This proof of concept shows a mode to continuously collect BLE advertisements sent by Smart Home wireless consumer sensors via a [FRITZ!Box](https://avm.de/) router/modem and store data in clear form to a local DB in the FRITZ!Box. At the moment the code is just an example.
