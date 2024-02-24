@@ -51,7 +51,7 @@ The following SCAN modes are allowed:
 Recognized MAC brands:
 
 Brand MAC|Brand name|IC PIN|LED
---------|---|---
+--------|---|---|---
 A4:C1:38|Telink Semiconductor (Taipei) Co. Ltd|PC2|RBG Blue
 54:EF:44|Lumi United Technology Co., Ltd|PC3|RBG Red
 E4:AA:EC|Tianjin Hualai Tech Co, Ltd|PC4|RBG Green
