@@ -16,6 +16,56 @@ extern u8 ATE;
 extern u8  mac_public[6];
 extern void lsleep_enable();
 
+typedef struct _gpio {
+	const char *cmd; /**< Command String. */
+	const int gpio;
+}_gpio_t;
+
+_gpio_t gpio_ports[] =
+{
+    { "PA1", GPIO_PA1 },
+    { "PA2", GPIO_PA2 },
+    { "PA3", GPIO_PA3 },
+    { "PA4", GPIO_PA4 },
+    { "PA5", GPIO_PA5 },
+    { "PA6", GPIO_PA6 },
+    { "PA7", GPIO_PA7 },
+
+    { "PB0", GPIO_PB0 },
+    { "PB1", GPIO_PB1 },
+    { "PB2", GPIO_PB2 },
+    { "PB3", GPIO_PB3 },
+    { "PB4", GPIO_PB4 },
+    { "PB5", GPIO_PB5 },
+    { "PB6", GPIO_PB6 },
+    { "PB7", GPIO_PB7 },
+
+    { "PC0", GPIO_PC0 },
+    { "PC1", GPIO_PC1 },
+    { "PC2", GPIO_PC2 },
+    { "PC3", GPIO_PC3 },
+    { "PC4", GPIO_PC4 },
+    { "PC5", GPIO_PC5 },
+    { "PC6", GPIO_PC6 },
+    { "PC7", GPIO_PC7 },
+
+    { "PD0", GPIO_PD0 },
+    { "PD1", GPIO_PD1 },
+    { "PD2", GPIO_PD2 },
+    { "PD3", GPIO_PD3 },
+    { "PD4", GPIO_PD4 },
+    { "PD5", GPIO_PD5 },
+    { "PD6", GPIO_PD6 },
+    { "PD7", GPIO_PD7 },
+
+    { "PE0", GPIO_PE0 },
+    { "PE1", GPIO_PE1 },
+    { "PE2", GPIO_PE2 },
+    { "PE3", GPIO_PE3 },
+
+	{0, 	0}
+};
+
 int str2hex(char * pbuf, int len)
 {
 	int i = 0;
@@ -314,6 +364,82 @@ static unsigned char atCmd_Mode(char *pbuf,  int mode, int length)
 		return 2;
 	}
 	return 0;
+}
+
+static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
+{
+    const _gpio_t *cmd_ptr = NULL;
+    char gpio_name[6];
+
+	if(mode == AT_CMD_MODE_READ)
+	{
+        cmd_ptr = gpio_ports;
+        printf("\r\n");
+        for(; cmd_ptr->cmd; cmd_ptr++)
+            printf("+GPIO,%s:%d\r\n", cmd_ptr->cmd, gpio_read(cmd_ptr->gpio));
+        return 0;
+	}
+	else if(mode == AT_CMD_MODE_SET)
+	{
+        if ( (strlen(pbuf) == 4) && (pbuf[3] == '?') )
+        {
+            strcpy(gpio_name, pbuf);
+            gpio_name[3] = '\0';
+            cmd_ptr = gpio_ports;
+            for(; cmd_ptr->cmd; cmd_ptr++)
+            {
+                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                gpio_set_func(cmd_ptr->gpio, AS_GPIO);
+                gpio_set_output_en(cmd_ptr->gpio, 0);//disable output
+                gpio_set_input_en(cmd_ptr->gpio, 1);//enable input
+                printf("\r\n+GPIO,%s:%d\r\n", cmd_ptr->cmd, gpio_read(cmd_ptr->gpio));
+                return 0;
+            }
+            printf("\r\n+GPIO_ERROR: invalid port\r\n");
+            return 2;
+        }
+        if (strlen(pbuf) != 5)
+        {
+            printf("\r\n+GPIO_ERROR: invalid command length\r\n");
+            return 2;
+        }
+        if ( (pbuf[3] == '^') && ( (pbuf[4] == '0') || (pbuf[4] == '1') || (pbuf[4] == '2') || (pbuf[4] == '3') ) )
+        {
+            strcpy(gpio_name, pbuf);
+            gpio_name[3] = '\0';
+            cmd_ptr = gpio_ports;
+            for(; cmd_ptr->cmd; cmd_ptr++)
+            {
+                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                printf("\r\n+GPIO,%s^%d\r\n", cmd_ptr->cmd, (pbuf[4] - '0'));
+                gpio_setup_up_down_resistor(cmd_ptr->gpio, (pbuf[4] - '0'));
+                return 0;
+            }
+            printf("\r\n+GPIO_ERROR: invalid port for up/down reseistor\r\n");
+            return 2;
+        }
+        if ( (pbuf[3] == ':') && ( (pbuf[4] == '0') || (pbuf[4] == '1')) )
+            {
+            strcpy(gpio_name, pbuf);
+            gpio_name[3] = '\0';
+            cmd_ptr = gpio_ports;
+            for(; cmd_ptr->cmd; cmd_ptr++)
+            {
+                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                printf("\r\n+GPIO,%s:%d\r\n", cmd_ptr->cmd, (pbuf[4] == '1'));
+                gpio_set_func(cmd_ptr->gpio, AS_GPIO);
+                gpio_set_output_en(cmd_ptr->gpio, 1);//enable output
+                gpio_set_input_en(cmd_ptr->gpio, 0);//disable input
+                gpio_write(cmd_ptr->gpio, (pbuf[4] == '1'));
+                return 0;
+            }
+            printf("\r\n+GPIO_ERROR: invalid assigned port\r\n");
+            return 2;
+        }
+        printf("\r\n+GPIO_ERROR: invalid syntax\r\n");
+        return 2;
+	}
+    return 2;
 }
 
 void Scan_Stop()
@@ -660,6 +786,7 @@ static unsigned char atCmd_Board_test(char *pbuf,  int mode, int length)
 //读写命令
 _at_command_t gAtCmdTb_writeRead[] =
 { 
+	{ "GPIO", 	atCmd_Gpio,	"Write/Read GPIO\r\n"},
 	{ "BAUD", 	atCmd_Baud,	"Set/Read BT Baud\r\n"},
 	{ "NAME", 	atCmd_Name,	"Set/Read BT Name\r\n"},
 	{ "MAC", 	atCmd_Mac,	"Set/Read BT MAC\r\n"},

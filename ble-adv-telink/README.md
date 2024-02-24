@@ -4,7 +4,7 @@
  * @LastEditTime: 2024-02-10 16:53:37
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
- * @FilePath: /Telink_825X_SDK/example/at/README.md
+ * @FilePath: ble-adv-telink/README.md
  -->
 # Ble-Adv-Telink Project
 
@@ -50,12 +50,12 @@ The following SCAN modes are allowed:
 
 Recognized MAC brands:
 
-Brand MAC|Brand name|IC PIN (LED)
+Brand MAC|Brand name|IC PIN|LED
 --------|---|---
-A4:C1:38|Telink Semiconductor (Taipei) Co. Ltd|GPIO_PC2
-54:EF:44|Lumi United Technology Co., Ltd|GPIO_PC3
-E4:AA:EC|Tianjin Hualai Tech Co, Ltd|GPIO_PC4
-Any other MAC|filtered out with AT+SCAN=3|no led
+A4:C1:38|Telink Semiconductor (Taipei) Co. Ltd|PC2|RBG Blue
+54:EF:44|Lumi United Technology Co., Ltd|PC3|RBG Red
+E4:AA:EC|Tianjin Hualai Tech Co, Ltd|PC4|RBG Green
+Any other MAC|filtered out with AT+SCAN=3|no led|
 
 Change the code *app_master.c* to edit the trailing parts of MAC addresses which are filtered and to control related LED color.
 
@@ -296,6 +296,7 @@ IRCAMA Ai-Thinker BLE AT V1.0.1
 +ADV:-93,30F94BA4A1A0,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
 +ADV:-99,30F94BA521D2,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
 +ADV:-94,30F94BA524DE,020106110677AE8C12719E7BB6E6113A2110E1412107084461696B696E
++ADV:-94,A4C138AABBCC,0201061416d2fc4195b0efda789dd953b02600009341626f
 ...
 ```
 
@@ -325,9 +326,8 @@ If the control is not processed (left floating) and the module is not connected 
 |   Module|Serial port TX|Serial port RX|Control pin|Low power consumption status indication pin|Connection status indication pin|
 |---------|--------------|--------------|-----------|-------------------------------------------|--------------------------------|
 |TB-01    |PB1           |PB0           |PC5        |None                                       |None                            |
-|TB-02+   |PB1           |PA0           |PC5        |PC3                                        |PC4                             |
-|TB-02_Kit|PB1           |PB7           |PC5        |PC3                                        |PC4                             |
-
+|TB-02+   |PB1           |PA0           |PC5        |PC3, RBG Red                               |PC4, RBG Green                  |
+|TB-02_Kit|PB1           |PB7           |PC5        |PC3, RBG Red                               |PC4, RBG Green                  |
 
 When the module is not connected to the mobile phone, it will be in AT mode and can respond to AT commands. After connecting with the mobile phone, it will enter the transparent transmission mode and no longer respond to AT commands. If the user needs to send AT commands in transparent transmission mode, the control pin can be pulled low. After pulling low, the module will temporarily enter AT mode, and return to transparent transmission mode after releasing it. The status corresponds to the following table:
 
@@ -368,10 +368,10 @@ AT commands can be subdivided into four format types:
 |----|-----|----|----|
 |1|AT|Test AT|
 |2|ATE|Switch echo|
-|3|AT+GMR|Query firmware version|
+|3|AT+GMR|Query firmware version|Use AT+GMR to qyery, not AT+GMR?
 |4|AT+RST|Restart module
 |5|AT+SLEEP|Deep sleep|
-|6|AT+ RESTORE|Restore factory settings|Will restart after recovery|
+|6|AT+RESTORE|Restore factory settings|Will restart after recovery|
 |7|AT+BAUD|Query or set the baud rate|It will take effect after restart|
 |8|AT+NAME|Query or set the Bluetooth broadcast name|It will take effect after restart|
 |9|AT+MAC|Set or query the module MAC address|It will take effect after restart|
@@ -388,6 +388,21 @@ AT commands can be subdivided into four format types:
 |20|AT+IBCNUUID|Set or read iBeacon UUID|
 |21|AT+MAJOR|Set or read iBeacon Major|
 |22|AT+MINOR|Set or read iBeacon Minor|
+|23|AT+BTEST|Enter board test loop of all 5 LEDs|Terminate the board test loop with a reset
+|24|AT+GPIO?|Read all GPIO ports|Do not change any setting. Return a full list of +GPIO=Pxx:n, then OK
+|25|AT+GPIO=Pxx?|Set port as GPIO. Set GPIO as INPUT. Read GPIO port Pxx|Return +GPIO=Pxx:n, then OK
+|26|AT+GPIO=Pxx:n|Set port as GPIO. Set GPIO as OUTPUT. Write n GPIO port Pxx|n can be 0 or 1. Return +GPIO=Pxx:n, then OK
+|27|AT+GPIO=Pxx^n|Set up/down resistor for a GPIO|n can be 0, 1, 2 or 3. Return +GPIO=Pxx^n, then OK
+
+Pxx can be PA1..8, PB0..7, PC0..7, PD0..7, PE0..3
+
+LED|Color
+---|-----
+PC2|RBG Blue
+PC3|RBG Red
+PC4|RBG Green
+PB4|Lateral small Yellow
+PB5|Lateral While
 
 ## Host mode
 In master mode, the module can communicate with another slave module. The main operations are as follows:
@@ -419,7 +434,7 @@ Enter deep sleep mode:
 
 	AT+SLEEP
 
-After executing the appeal instruction module and returning OK, it will immediately enter sleep mode and set the serial port RX as the wake-up pin. Send any character to the module again to wake it up.
+After executing the AT+SLEEP instruction and returning OK, the module will immediately enter sleep mode and set the serial port RX as the wake-up pin. Send any character to the module again to wake it up.
 
 Light sleep settings:
 In the disconnected state, send the following command and the module will enter light sleep mode:
