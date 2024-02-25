@@ -7,7 +7,7 @@
 
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
-#include <tokenize.h>
+#include "tokenize.h"
 
 //外部变量
 extern u8 baud_buf[];
@@ -435,7 +435,7 @@ static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
             cmd_ptr = gpio_ports;
             for(; cmd_ptr->cmd; cmd_ptr++)
             {
-                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                if(strcmp(cmd_ptr->cmd, gpio_name)) continue;   
                 gpio_set_func(cmd_ptr->gpio, AS_GPIO);
                 gpio_set_output_en(cmd_ptr->gpio, 0);//disable output
                 gpio_set_input_en(cmd_ptr->gpio, 1);//enable input
@@ -457,7 +457,7 @@ static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
             cmd_ptr = gpio_ports;
             for(; cmd_ptr->cmd; cmd_ptr++)
             {
-                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                if(strcmp(cmd_ptr->cmd, gpio_name)) continue;   
                 printf("\r\n+GPIO,%s^%d\r\n", cmd_ptr->cmd, (pbuf[4] - '0'));
                 gpio_setup_up_down_resistor(cmd_ptr->gpio, (pbuf[4] - '0'));
                 return 0;
@@ -472,7 +472,7 @@ static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
             cmd_ptr = gpio_ports;
             for(; cmd_ptr->cmd; cmd_ptr++)
             {
-                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                if(strcmp(cmd_ptr->cmd, gpio_name)) continue;   
                 printf("\r\n+GPIO,%s:%d\r\n", cmd_ptr->cmd, (pbuf[4] == '1'));
                 gpio_set_func(cmd_ptr->gpio, AS_GPIO);
                 gpio_set_output_en(cmd_ptr->gpio, 1);//enable output
@@ -510,7 +510,7 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
             pwm_ptr = pwm_ports;
             for(; pwm_ptr->cmd; pwm_ptr++)
             {
-                if(strxcmp(pwm_ptr->cmd, pbuf)) continue;   
+                if(strcmp(pwm_ptr->cmd, pbuf)) continue;   
                 printf("\r\n+PWM_STOP:%s\r\n", pwm_ptr->cmd);
                 pwm_stop(pwm_ptr->pwm);
                 return 0;
@@ -527,6 +527,7 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
             pbuf,  // string to tokenize
             "%s%s%d%d",  // format
             ",",  // set of separators
+            true,  // numbers are strict, without non digit characters that can be skept?
             true,  // also spaces are separators?
             true,  // do not allow additional non-space characters at the end?
             pwm_name,  // %s
@@ -542,12 +543,12 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
         pwm_ptr = pwm_ports;
         for(; pwm_ptr->cmd; pwm_ptr++)
         {
-            if(strxcmp(pwm_ptr->cmd, pwm_name)) continue;   
+            if(strcmp(pwm_ptr->cmd, pwm_name)) continue;   
 
             cmd_ptr = gpio_ports;
             for(; cmd_ptr->cmd; cmd_ptr++)
             {
-                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                if(strcmp(cmd_ptr->cmd, gpio_name)) continue;   
                 printf("\r\n+PWM_START:%s,%s,%d,%d\r\n", pwm_ptr->cmd, cmd_ptr->cmd, cycle, duty);
 
                 gpio_set_func(cmd_ptr->gpio, pwm_ptr->as_pwm);

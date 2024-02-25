@@ -1,6 +1,6 @@
 #include <stdarg.h>
 #include <stdbool.h>
-#include <tokenize.h>
+#include "tokenize.h"
 
 #ifndef NULL
 #define NULL    0
@@ -43,7 +43,7 @@ int	c_isdigit(int c)
 
 #define NEXTCHAR (PointBuf++)
 #define CURCHAR (buff[PointBuf])
-int tokenize(const char* buff, char* format, char* separator, bool spaces, bool complete, ...)
+int tokenize(const char* buff, char* format, char* separator, bool strict_number, bool spaces, bool complete, ...)
 {
 	int count = 0;
     int PointBuf = 0;
@@ -116,7 +116,9 @@ int tokenize(const char* buff, char* format, char* separator, bool spaces, bool 
 							if (CURCHAR == '-')
 								//if(format[PointFt] != 'u') // ignore sign (no std)
 									sign = -1;
-						NEXTCHAR;
+                        if (strict_number && (CURCHAR != 0) && ! c_isSeparator(CURCHAR, separator, spaces))
+                            break;
+                        NEXTCHAR;
                         if (CURCHAR == 0)
                             break;
 					}
@@ -130,6 +132,8 @@ int tokenize(const char* buff, char* format, char* separator, bool spaces, bool 
 						NEXTCHAR;
 						len--;
 					}
+                    if (strict_number && (CURCHAR != 0) && ! c_isSeparator(CURCHAR, separator, spaces))
+                        break;
 
 					if (save)
 						*(int*)va_arg(ap, int*) = value * sign;
@@ -203,7 +207,7 @@ int tokenize(const char* buff, char* format, char* separator, bool spaces, bool 
 	va_end(ap);
     while (c_isSeparator(CURCHAR, NULL, true)) // ignore isspace (std)
         NEXTCHAR; //
-    if (complete && CURCHAR != 0)
-        count++;
+    if (complete && (CURCHAR != 0))
+        count = -1;
 	return count;
 }
