@@ -311,13 +311,7 @@ SDK documentation: https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tb/Telin
 
 -----------------------------------------
 
-# AT firmware design principle - Original description (English translation from Chinese)
-
-The following comments come from the original code (AT version 0.7.4) and might be now partially superseded by the modifications.
-
-## AT Design Principles
-
-Added comments to some files
+Note: comments come from the original code (AT version 0.7.4), English translation from Chinese.
 
 ## AT mode selection and conversion
 
@@ -398,7 +392,7 @@ AT commands can be subdivided into four format types:
 |29|TESTCHR=<characters>|Test characters|
 |30|AT+PWM?|stop PWM0|+PWM_STOP:PWM0
 |31|AT+PWM=PWMy?|stop PWMy|Example: AT+PWM=PWM5?
-|32|AT+PWM=PWMy,Pxx,c,d|start PWMy with port Pxx, cycle c and duty d|Example: AT+PWM=PWM5,PB5,1000,500
+|32|AT+PWM=PWMy,Pxx,d,c|start 'PWMy' with port 'Pxx', 'd' duty cycle and 'c' CMP|Example: AT+PWM=PWM5,PB5,1000,500
 
 Pxx can be PA1..8, PB0..7, PC0..7, PD0..7, PE0..3
 PWMy can be PWM0..5, PWM0_N..PWM5_N
@@ -505,12 +499,11 @@ Set the MINOR of iBeacon (hexadecimal format, 2 bytes in total):
 
 Note: The above commands will take effect after restarting and will be saved after power off. In conjunction with setting the broadcast gap, automatic light sleep can reduce iBeacon power consumption.
 
-## FAQ
+## Note
 
-- 1/ Modify the default name of Bluetooth broadcast, the default is "Ai-Thinker"
+To modify the default Bluetooth broadcast name, edit `const u8 tbl_scanRsp []` in *app.c*. The default value is "Ai-Thinker":
 
-```
-//app.c
+```c
 const u8 tbl_scanRsp [] = {
     0x0B, 0x09, 'A', 'i', '-', 'T', 'h', 'i', 'n', 'k', 'e', 'r',
 };
