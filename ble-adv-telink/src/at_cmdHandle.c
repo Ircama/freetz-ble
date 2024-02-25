@@ -7,7 +7,7 @@
 
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
-#include <stdarg.h>
+#include <tokenize.h>
 
 //外部变量
 extern u8 baud_buf[];
@@ -89,180 +89,6 @@ _gpio_t gpio_ports[] =
 
 	{0, 	0}
 };
-
-#define LENSCANS 10
-int c_isspace(const int c);
-int	c_isdigit(int c);
-
-// implementation of basic dependencies
-// std
-int c_isspace(const int c)
-{
-	switch (c)
-	{ /* in the "C" locale: */
-		case ' ': /* space */
-		case '\f': /* form feed */
-		case '\n': /* new-line */
-		case '\r': /* carriage return */
-		case '\t': /* horizontal tab */
-		case '\v': /* vertical tab */
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-// std
-int	c_isdigit(int c)
-{
-	if (c >= '0' && c <= '9')
-		return (1);
-	else
-		return (0);
-}
-
-#define NEXTCHAR (PointBuf++)
-#define CURCHAR (buff[PointBuf])
-int sscanf(const char* buff, char* format, ...)
-{
-	int count = 0;
-    int PointBuf = 0;
-	int PointFt = 0;
-
-	va_list ap;
-	va_start(ap, format);
-	while (format && format[PointFt]) // Read format
-	{
-		if (format[PointFt] == '%')
-		{
-			PointFt++;
-			// for %*
-			bool save = true;
-			if (format[PointFt] == '*')
-			{
-				save = false;
-				PointFt++;
-			}
-			// for %1234567890
-			unsigned len = 0;
-			bool lenEn = false;
-			while (c_isdigit(format[PointFt]))
-			{
-				lenEn = true;
-				len *= 10;
-				len += (format[PointFt] - '0');
-				PointFt++;
-			}
-			// for %[]
-			char stop[LENSCANS];
-			unsigned stopN = 0;
-			if (format[PointFt] == '[')
-			{
-				while (format[PointFt] != ']')
-				{
-					if (format[PointFt] != '[')
-					{
-						stop[stopN] = format[PointFt];
-						stopN++;
-					}
-					PointFt++;
-				}
-			}
-			// %?
-			switch (format[PointFt])
-			{
-				case 'c':
-					while (c_isspace(CURCHAR)) // ignore isspace (std)
-						NEXTCHAR; //
-					if (save)
-						*(char*)va_arg(ap, char*) = CURCHAR;
-					NEXTCHAR;
-					//if (save) // ignore %* (std)
-						count++;
-					break;
-				case 'u':
-				case 'd':
-                {
-					int sign = 1;
-					while (!c_isdigit(CURCHAR))
-					{
-						if (CURCHAR == '+' || CURCHAR == '-')
-							if (CURCHAR == '-')
-								//if(format[PointFt] != 'u') // ignore sign (no std)
-									sign = -1;
-						NEXTCHAR;
-					}
-					long value = 0;
-					while(c_isdigit(CURCHAR) && (lenEn != true || len > 0))
-					{
-						value *= 10;
-						value += (int)(CURCHAR - '0');
-						NEXTCHAR;
-						len--;
-					}
-
-					if (save)
-						*(int*)va_arg(ap, int*) = value * sign;
-					//if (save) // ignore %* (std)
-						count++;
-					break;
-                }
-				case ']':
-				case 's':
-                {
-					char* t = save ? va_arg(ap, char*) : NULL;
-
-					while (c_isspace(CURCHAR)) // ignor isspace (std)
-						NEXTCHAR; //
-
-					while (true)
-					{
-						bool con = false;
-						if (stopN != 0)
-						{
-							bool invert = (stop[0] == '^');
-							con = !invert;
-							for (unsigned i = (invert ? 1 : 0); i < stopN; i++)
-								if (stop[i] == CURCHAR)
-								{
-									con = invert;
-									break;
-								}
-
-							if (con == true)
-								break;
-						}
-
-						if (!c_isspace(CURCHAR) || ((!con && stopN != 0) && (lenEn != true || len > 0)))
-						{
-							if (save)
-								*t = CURCHAR;
-							NEXTCHAR;
-							t++;
-							len--;
-						}
-						else
-							break;
-					}
-					// add \0
-					{
-						if (save)
-							*t = '\0';
-						t++;
-					}
-					//if (save) // ignore %* (std)
-						count++;
-					break;
-                }
-			}
-		}
-		//else  // drop char in buff (no std)
-		//	NEXTCHAR; //
-		PointFt++;
-	}
-	va_end(ap);
-	return count;
-}
 
 int str2hex(char * pbuf, int len)
 {
@@ -668,8 +494,7 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
     const _pwm_t *pwm_ptr = NULL;
     const _gpio_t *cmd_ptr = NULL;
     char pwm_name[10], gpio_name[10];
-    char * p_pbuf;
-    int cycle = -1, duty = -1, ret, i;
+    int cycle = -1, duty = -1, ret;
 
 	if(mode == AT_CMD_MODE_READ)
 	{
@@ -698,21 +523,20 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
             printf("\r\n+PWM_ERROR: invalid command length\r\n");
             return 2;
         };
-        p_pbuf = pbuf;
-        i=0;
-        while(*p_pbuf)
+        ret = tokenize(
+            pbuf,  // string to tokenize
+            "%s%s%d%d",  // format
+            ",",  // set of separators
+            true,  // also spaces are separators?
+            true,  // do not allow additional non-space characters at the end?
+            pwm_name,  // %s
+            gpio_name,  // %s
+            &cycle,  // %d
+            &duty  // %d
+        );
+        if ( (ret != 4) || (cycle < 0) || (duty < 0) )
         {
-            if (*p_pbuf == ',')
-            {
-                *p_pbuf = ' ';
-                i++;
-            }
-            p_pbuf++;
-        }
-        ret = sscanf(pbuf, "%s%s%d%d", pwm_name, gpio_name, &cycle, &duty);
-        if ( (i != 3) || (cycle < 0) || (duty < 0) )
-        {
-            printf("\r\n+PWM_ERROR: invalid number of arguments\r\n");
+            printf("\r\n+PWM_ERROR: invalid arguments\r\n");
             return 2;
         };
         pwm_ptr = pwm_ports;
