@@ -29,6 +29,7 @@ Changes vs. the original firmware:
 - advertising duplicates are not disabled
 - using the colored LED to show the device brand of each received advertising
 - added filter advertising on specific three brands
+- added GPIO, PWM and other features.
 
 To enable scanning and to set `AT+SCAN=<value>`, the device shall be in host/master mode (`AT+MODE=1`):
 
@@ -393,8 +394,14 @@ AT commands can be subdivided into four format types:
 |25|AT+GPIO=Pxx?|Set port as GPIO. Set GPIO as INPUT. Read GPIO port Pxx|Return +GPIO=Pxx:n, then OK
 |26|AT+GPIO=Pxx:n|Set port as GPIO. Set GPIO as OUTPUT. Write n GPIO port Pxx|n can be 0 or 1. Return +GPIO=Pxx:n, then OK
 |27|AT+GPIO=Pxx^n|Set up/down resistor for a GPIO|n can be 0, 1, 2 or 3. Return +GPIO=Pxx^n, then OK
+|28|TESTCHR?|Test characters|
+|29|TESTCHR=<characters>|Test characters|
+|30|AT+PWM?|stop PWM0|+PWM_STOP:PWM0
+|31|AT+PWM=PWMy?|stop PWMy|Example: AT+PWM=PWM5?
+|32|AT+PWM=PWMy,Pxx,c,d|start PWMy with port Pxx, cycle c and duty d|Example: AT+PWM=PWM5,PB5,1000,500
 
 Pxx can be PA1..8, PB0..7, PC0..7, PD0..7, PE0..3
+PWMy can be PWM0..5, PWM0_N..PWM5_N
 
 LED|Color
 ---|-----

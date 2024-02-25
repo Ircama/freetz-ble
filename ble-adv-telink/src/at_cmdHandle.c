@@ -7,6 +7,7 @@
 
 #include "tinyFlash/tinyFlash.h"
 #include "tinyFlash_Index.h"
+#include <stdarg.h>
 
 //外部变量
 extern u8 baud_buf[];
@@ -15,6 +16,29 @@ extern u8 my_scanRsp[32];
 extern u8 ATE;
 extern u8  mac_public[6];
 extern void lsleep_enable();
+
+typedef struct _pwm {
+	const char *cmd; /**< Command String. */
+	const int pwm;
+	const int as_pwm;
+}_pwm_t;
+
+_pwm_t pwm_ports[] =
+{
+    { "PWM0_N", PWM0_ID, AS_PWM0_N },
+    { "PWM1_N", PWM1_ID, AS_PWM1_N },
+    { "PWM2_N", PWM2_ID, AS_PWM2_N },
+    { "PWM3_N", PWM3_ID, AS_PWM3_N },
+    { "PWM4_N", PWM4_ID, AS_PWM4_N },
+    { "PWM5_N", PWM5_ID, AS_PWM5_N },
+    { "PWM0", PWM0_ID, AS_PWM0 },
+    { "PWM1", PWM1_ID, AS_PWM1 },
+    { "PWM2", PWM2_ID, AS_PWM2 },
+    { "PWM3", PWM3_ID, AS_PWM3 },
+    { "PWM4", PWM4_ID, AS_PWM4 },
+    { "PWM5", PWM5_ID, AS_PWM5 },
+	{0, 	0}
+};
 
 typedef struct _gpio {
 	const char *cmd; /**< Command String. */
@@ -65,6 +89,180 @@ _gpio_t gpio_ports[] =
 
 	{0, 	0}
 };
+
+#define LENSCANS 10
+int c_isspace(const int c);
+int	c_isdigit(int c);
+
+// implementation of basic dependencies
+// std
+int c_isspace(const int c)
+{
+	switch (c)
+	{ /* in the "C" locale: */
+		case ' ': /* space */
+		case '\f': /* form feed */
+		case '\n': /* new-line */
+		case '\r': /* carriage return */
+		case '\t': /* horizontal tab */
+		case '\v': /* vertical tab */
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+// std
+int	c_isdigit(int c)
+{
+	if (c >= '0' && c <= '9')
+		return (1);
+	else
+		return (0);
+}
+
+#define NEXTCHAR (PointBuf++)
+#define CURCHAR (buff[PointBuf])
+int sscanf(const char* buff, char* format, ...)
+{
+	int count = 0;
+    int PointBuf = 0;
+	int PointFt = 0;
+
+	va_list ap;
+	va_start(ap, format);
+	while (format && format[PointFt]) // Read format
+	{
+		if (format[PointFt] == '%')
+		{
+			PointFt++;
+			// for %*
+			bool save = true;
+			if (format[PointFt] == '*')
+			{
+				save = false;
+				PointFt++;
+			}
+			// for %1234567890
+			unsigned len = 0;
+			bool lenEn = false;
+			while (c_isdigit(format[PointFt]))
+			{
+				lenEn = true;
+				len *= 10;
+				len += (format[PointFt] - '0');
+				PointFt++;
+			}
+			// for %[]
+			char stop[LENSCANS];
+			unsigned stopN = 0;
+			if (format[PointFt] == '[')
+			{
+				while (format[PointFt] != ']')
+				{
+					if (format[PointFt] != '[')
+					{
+						stop[stopN] = format[PointFt];
+						stopN++;
+					}
+					PointFt++;
+				}
+			}
+			// %?
+			switch (format[PointFt])
+			{
+				case 'c':
+					while (c_isspace(CURCHAR)) // ignore isspace (std)
+						NEXTCHAR; //
+					if (save)
+						*(char*)va_arg(ap, char*) = CURCHAR;
+					NEXTCHAR;
+					//if (save) // ignore %* (std)
+						count++;
+					break;
+				case 'u':
+				case 'd':
+                {
+					int sign = 1;
+					while (!c_isdigit(CURCHAR))
+					{
+						if (CURCHAR == '+' || CURCHAR == '-')
+							if (CURCHAR == '-')
+								//if(format[PointFt] != 'u') // ignore sign (no std)
+									sign = -1;
+						NEXTCHAR;
+					}
+					long value = 0;
+					while(c_isdigit(CURCHAR) && (lenEn != true || len > 0))
+					{
+						value *= 10;
+						value += (int)(CURCHAR - '0');
+						NEXTCHAR;
+						len--;
+					}
+
+					if (save)
+						*(int*)va_arg(ap, int*) = value * sign;
+					//if (save) // ignore %* (std)
+						count++;
+					break;
+                }
+				case ']':
+				case 's':
+                {
+					char* t = save ? va_arg(ap, char*) : NULL;
+
+					while (c_isspace(CURCHAR)) // ignor isspace (std)
+						NEXTCHAR; //
+
+					while (true)
+					{
+						bool con = false;
+						if (stopN != 0)
+						{
+							bool invert = (stop[0] == '^');
+							con = !invert;
+							for (unsigned i = (invert ? 1 : 0); i < stopN; i++)
+								if (stop[i] == CURCHAR)
+								{
+									con = invert;
+									break;
+								}
+
+							if (con == true)
+								break;
+						}
+
+						if (!c_isspace(CURCHAR) || ((!con && stopN != 0) && (lenEn != true || len > 0)))
+						{
+							if (save)
+								*t = CURCHAR;
+							NEXTCHAR;
+							t++;
+							len--;
+						}
+						else
+							break;
+					}
+					// add \0
+					{
+						if (save)
+							*t = '\0';
+						t++;
+					}
+					//if (save) // ignore %* (std)
+						count++;
+					break;
+                }
+			}
+		}
+		//else  // drop char in buff (no std)
+		//	NEXTCHAR; //
+		PointFt++;
+	}
+	va_end(ap);
+	return count;
+}
 
 int str2hex(char * pbuf, int len)
 {
@@ -366,6 +564,29 @@ static unsigned char atCmd_Mode(char *pbuf,  int mode, int length)
 	return 0;
 }
 
+static unsigned char atCmd_TestChr(char *pbuf,  int mode, int length)
+{
+	if(mode == AT_CMD_MODE_READ)
+	{
+        int i;
+        for (i=0; i<256; i++)
+        {
+            printf("\r\n+TESTCHR,%02X,BEGIN-", i);
+            at_printchar(i);
+            printf("-END");
+        }
+	}
+	else if(mode == AT_CMD_MODE_SET)
+	{
+        char * p_pbuf = pbuf;
+        printf("\r\n+TESTCHR=");
+        for (; p_pbuf < pbuf+length; p_pbuf++)
+            printf("%02X,", *p_pbuf);
+        printf("\r\n");
+	}
+	return 0;
+}
+
 static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
 {
     const _gpio_t *cmd_ptr = NULL;
@@ -415,7 +636,7 @@ static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
                 gpio_setup_up_down_resistor(cmd_ptr->gpio, (pbuf[4] - '0'));
                 return 0;
             }
-            printf("\r\n+GPIO_ERROR: invalid port for up/down reseistor\r\n");
+            printf("\r\n+GPIO_ERROR: invalid port for up/down resistor\r\n");
             return 2;
         }
         if ( (pbuf[3] == ':') && ( (pbuf[4] == '0') || (pbuf[4] == '1')) )
@@ -439,6 +660,83 @@ static unsigned char atCmd_Gpio(char *pbuf,  int mode, int length)
         printf("\r\n+GPIO_ERROR: invalid syntax\r\n");
         return 2;
 	}
+    return 2;
+}
+
+static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
+{
+    const _pwm_t *pwm_ptr = NULL;
+    const _gpio_t *cmd_ptr = NULL;
+    char pwm_name[10], gpio_name[10];
+    char * p_pbuf;
+    int cycle = -1, duty = -1, ret, i;
+
+	if(mode == AT_CMD_MODE_READ)
+	{
+        pwm_stop(PWM0_ID);
+        printf("\r\n+PWM_STOP:PWM0\r\n");
+        return 0;
+	}
+	else if(mode == AT_CMD_MODE_SET)
+	{
+        if ( (strlen(pbuf) == 5) && (pbuf[4] == '?') )
+        {
+            pbuf[4] = '\0';
+            pwm_ptr = pwm_ports;
+            for(; pwm_ptr->cmd; pwm_ptr++)
+            {
+                if(strxcmp(pwm_ptr->cmd, pbuf)) continue;   
+                printf("\r\n+PWM_STOP:%s\r\n", pwm_ptr->cmd);
+                pwm_stop(pwm_ptr->pwm);
+                return 0;
+            }
+            return 2;
+        }
+
+        if (strlen(pbuf) < 5)
+        {
+            printf("\r\n+PWM_ERROR: invalid command length\r\n");
+            return 2;
+        };
+        p_pbuf = pbuf;
+        i=0;
+        while(*p_pbuf)
+        {
+            if (*p_pbuf == ',')
+            {
+                *p_pbuf = ' ';
+                i++;
+            }
+            p_pbuf++;
+        }
+        ret = sscanf(pbuf, "%s%s%d%d", pwm_name, gpio_name, &cycle, &duty);
+        if ( (i != 3) || (cycle < 0) || (duty < 0) )
+        {
+            printf("\r\n+PWM_ERROR: invalid number of arguments\r\n");
+            return 2;
+        };
+        pwm_ptr = pwm_ports;
+        for(; pwm_ptr->cmd; pwm_ptr++)
+        {
+            if(strxcmp(pwm_ptr->cmd, pwm_name)) continue;   
+
+            cmd_ptr = gpio_ports;
+            for(; cmd_ptr->cmd; cmd_ptr++)
+            {
+                if(strxcmp(cmd_ptr->cmd, gpio_name)) continue;   
+                printf("\r\n+PWM_START:%s,%s,%d,%d\r\n", pwm_ptr->cmd, cmd_ptr->cmd, cycle, duty);
+
+                gpio_set_func(cmd_ptr->gpio, pwm_ptr->as_pwm);
+                pwm_set_mode(pwm_ptr->pwm, PWM_NORMAL_MODE);
+                pwm_set_phase(pwm_ptr->pwm, 0);   //no phase at pwm beginning
+                pwm_set_cycle_and_duty( pwm_ptr->pwm, (u16) (cycle * CLOCK_SYS_CLOCK_1US),  (u16) (duty * CLOCK_SYS_CLOCK_1US) );
+                pwm_start(pwm_ptr->pwm);
+                return 0;
+            }
+        }
+        printf("\r\n+PWM_ERROR: invalid data\r\n");
+        return 2;
+    }
     return 2;
 }
 
@@ -785,7 +1083,9 @@ static unsigned char atCmd_Board_test(char *pbuf,  int mode, int length)
 }
 //读写命令
 _at_command_t gAtCmdTb_writeRead[] =
-{ 
+{
+	{ "TESTCHR",atCmd_TestChr,"Test sending and receiving characters\r\n"},
+	{ "PWM", 	atCmd_Pwm,	"Start/Stop PWM\r\n"},
 	{ "GPIO", 	atCmd_Gpio,	"Write/Read GPIO\r\n"},
 	{ "BAUD", 	atCmd_Baud,	"Set/Read BT Baud\r\n"},
 	{ "NAME", 	atCmd_Name,	"Set/Read BT Name\r\n"},

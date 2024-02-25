@@ -161,6 +161,12 @@ void my_gpio_init(void)
 	gpio_write(LOWPWR_STATE_GPIO, 0);
 }
 
+void at_printchar(unsigned char byte)
+{
+    while(uart_tx_is_busy());
+    uart_send_byte(byte);
+}
+
 void at_print(char * str)
 {
 	while(uart_tx_is_busy());
