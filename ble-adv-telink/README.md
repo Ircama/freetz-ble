@@ -8,7 +8,7 @@
  -->
 # Ble-Adv-Telink Project
 
-This code is based on [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) and is tested on a [Ai-Thinker TB-03F-KIT](https://docs.ai-thinker.com/_media/tb-03f-kit_specification_en.pdf).
+This code is based on [Ai-Thinker Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) and is tested on a [Ai-Thinker TB-03F-KIT](https://docs.ai-thinker.com/_media/tb-03f-kit_specification_en.pdf).
 
 It reuses the [AT example](https://github.com/Ai-Thinker-Open/Telink_825X_SDK/tree/master/example/at) included in the SDK, modifying it in order to appropriately process BLE advertisements for a FRITZ!Box device.
 
@@ -46,7 +46,7 @@ The following SCAN modes are allowed:
 |`AT+SCAN`|Output depends on the SCAN mode|Start SCAN without modifying the SCAN mode|On-demand mode
 |`AT+SCAN=0`|`+SCAN_TYPE:0`|Start SCAN and automatically disable it after 3 seconds (default)| On-demand mode
 |`AT+SCAN=1`|`+SCAN_TYPE:1`, `+SCAN_SET_CONTINUOUS`|Start SCAN with no timeout|On-demand mode. If the device is rebooted, the scan does not automatically start.
-|`AT+SCAN=2`|`+SCAN_TYPE:2`, `+SCAN_SET_AUTO`|Autonomous mode. The SCAN is automatically started at boot, with no need to issue an `AT+SCAN` command each time the device is booted. To stop this mode, use `AT+SCAN=0`
+|`AT+SCAN=2`|`+SCAN_TYPE:2`, `+SCAN_SET_AUTO`|Autonomous mode. The SCAN is automatically started at boot, with no need to issue an `AT+SCAN` command each time the device is booted. Every 3 seconds the module returns `+ATWD` to allow the host to manage a watchdog control. To stop this mode, use `AT+SCAN=0`
 |`AT+SCAN=3`|`+SCAN_TYPE:3`, `+SCAN_SET_AUTO_FILTER`|Same as `AT+SCAN=2`, but the scan filters only the OUIs in the following table
 
 Recognized OUIs in `AT+SCAN=3` mode:
@@ -72,7 +72,7 @@ Switches can be passed with CFLAGS; e.g., `make CFLAGS="-D... -D..."`.
 
 The produced firmware is `src/out/ble-adv-telink.bin`.
 
-To burn the firmware with a PC, connect the device via USB and use either the *Telink_Tools.py* Python program (Python2 and Python3, Windows and Linux), or the [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe) Window software. Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x).
+To burn the firmware, connect the device via USB and use either the *Telink_Tools.py* Python program (Python2 and Python3, Windows and Linux), or the [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe) Window software. Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x).
 
 The *Telink_Tools.py* Python program requires `pip install pyserial`.
 
@@ -99,7 +99,7 @@ lsusb -tv
 python3 ../make/Telink_Tools.py --port /dev/ttyUSB0 burn out/ble-adv-telink.bin
 ```
 
-The *Telink_Tools.py* program will NOT work on freetz (the freetz device driver does not support sending ascii 0 characters).
+The *Telink_Tools.py* program also works on freetz: `python Telink_Tools.py --port /dev/ttyUSB0 burn ble-adv-telink.bin`.
 
 To flash the firmware with *Ai-Thinker_TB_Tools_V1.5.0.exe*:
 
@@ -521,3 +521,8 @@ const u8 tbl_scanRsp [] = {
     0x0B, 0x09, 'A', 'i', '-', 'T', 'h', 'i', 'n', 'k', 'e', 'r',
 };
 ```
+
+## Documentation
+
+- [SDK](https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tb/Telink%20Kite%20BLE%20SDK%20Developer%20Handbook.pdf)
+- [English SDK](https://wiki.telink-semi.cn/doc/an/AN_17092700-E_Telink 826x BLE SDK Developer Handbook.pdf)

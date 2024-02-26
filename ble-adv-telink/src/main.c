@@ -38,6 +38,7 @@ extern void app_uart_loop();
 extern void my_gpio_init(void);
 extern void app_uart_init(AT_BAUD baud);
 extern void app_uart_irq_proc(void);
+extern int watchdog();
 
 // from in app_master.c
 extern void ble_master_mainloop(void);
@@ -143,6 +144,7 @@ _attribute_ram_code_ int main (void)    //must run in ramcode
 
             blc_ll_setScanParameter(SCAN_TYPE_PASSIVE, SCAN_INTERVAL_100MS, SCAN_INTERVAL_100MS, OWN_ADDRESS_PUBLIC, SCAN_FP_ALLOW_ADV_ANY);
             blc_ll_setScanEnable (BLC_SCAN_ENABLE, DUP_FILTER_DISABLE);
+            blt_soft_timer_add((blt_timer_callback_t) watchdog, 3000000);  // 3 seconds
         }
     }
 

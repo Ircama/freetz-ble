@@ -42,7 +42,7 @@ except ImportError:
           "Check the README for installation instructions." % (sys.VERSION, sys.executable))
     raise
 
-__version__ = "0.4.1 dev"
+__version__ = "1.0 dev"
 
 PYTHON2 = sys.version_info[0] < 3  # True if on pre-Python 3
 
@@ -71,10 +71,15 @@ def get_port_list():
     return list(serial.tools.list_ports.comports())
 
 def uart_read(_port):
+    if hasattr(_port, 'read_all'):
+        serial_read = _port.read_all
+    else:
+        serial_read = _port.read
+        time.sleep(0.01)
     data = ''
     while _port.inWaiting() > 0:
         try:
-            data += _port.read_all().decode(encoding='utf-8')
+            data += serial_read().decode(encoding='utf-8', errors='ignore')
         except Exception as e:
             break
     return str(data)
@@ -85,7 +90,7 @@ def uart_write(_port, data):
 
     _port.write(data)
 
-def wait_result(_port, res, time_out = 200):
+def wait_result(_port, res, time_out = 200, print_out = None):
     wait_c = 0
     result = ''
     while True:
@@ -98,6 +103,8 @@ def wait_result(_port, res, time_out = 200):
 
     if result.find(res) == -1:
         return False
+    if print_out:
+        sys.stdout.write("[" + result.strip() + "] ")
     return True
 
 def telink_flash_write(_port, addr, data):
@@ -160,7 +167,7 @@ def connect_chip(_port):
 
     uart_write(_port, struct.pack('>BH', CMD_GET_VERSION, 0))
 
-    if wait_result(_port, "V"):
+    if wait_result(_port, "V", print_out=True):
         return True
     return False
 
@@ -359,8 +366,7 @@ def main(custom_commandline=None):
     _port.close()
 
 def _main():
-    #print("-- EN: Please download the Ai-Thinker Bootload Firware to the board first . \033[3;32m\033[0m") #921600
-    #print("-- CH: 烧录前务必确定烧录安信可科技制作的bootload固件（官方正品出厂前已烧录）。\033[3;32m\033[0m") #921600
+    print("-- Please download the Ai-Thinker Bootload Firware to the board first . \033[3;32m\033[0m") #921600
     
     # try:
     main()

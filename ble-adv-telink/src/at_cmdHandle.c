@@ -565,11 +565,18 @@ static unsigned char atCmd_Pwm(char *pbuf,  int mode, int length)
     return 2;
 }
 
-void Scan_Stop()
+int watchdog()
+{
+	at_print("+ATWD\r\n");
+    return(0);
+}
+
+int Scan_Stop()
 {
 	at_print("OK\r\n");
 	blt_soft_timer_delete((blt_timer_callback_t) Scan_Stop);
 	blc_ll_setScanEnable (BLC_SCAN_DISABLE, DUP_FILTER_DISABLE);
+    return(0);
 }
 //蓝牙主机模式开始扫描
 extern u8 scan_type;
@@ -585,10 +592,12 @@ static unsigned char atCmd_Scan(char *pbuf,  int mode, int length)
 		if(pbuf[0] == '2') {
             scan_type = 2;
             printf("\r\n+SCAN_SET_AUTO:%d\r\n", scan_type);
+            blt_soft_timer_add((blt_timer_callback_t) watchdog, 3000000);  // 3 seconds
         }
 		if(pbuf[0] == '3') {
             scan_type = 3;
             printf("\r\n+SCAN_SET_AUTO_FILTER:%d\r\n", scan_type);
+            blt_soft_timer_add((blt_timer_callback_t) watchdog, 3000000);  // 3 seconds
         }
         tinyFlash_Write(STORAGE_SCAN, &scan_type, 1);
     }
@@ -607,7 +616,7 @@ static unsigned char atCmd_Scan(char *pbuf,  int mode, int length)
 		blc_ll_setScanEnable (BLC_SCAN_ENABLE, DUP_FILTER_DISABLE);
 
 		if (!scan_type)
-            blt_soft_timer_add((blt_timer_callback_t) Scan_Stop, 3000000);//3S
+            blt_soft_timer_add((blt_timer_callback_t) Scan_Stop, 3000000);  // 3 seconds
 		return 0xff;
 	}
     at_print("\r\n+ERR:WRONG_DEVICE_MODE\r\n");
