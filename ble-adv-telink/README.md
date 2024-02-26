@@ -349,6 +349,7 @@ The serial port configuration part is in the `app_uart.c` file. The default TX i
 
 
 ## AT command format
+
 AT commands can be subdivided into four format types:
 
 |Type|Command format|Description|Remarks
@@ -397,20 +398,25 @@ AT commands can be subdivided into four format types:
 |29|TESTCHR=<characters>|Test characters|
 |30|AT+PWM?|stop PWM0|+PWM_STOP:PWM0
 |31|AT+PWM=PWMy?|stop PWMy|Example: AT+PWM=PWM5?
-|32|AT+PWM=PWMy,Pxx,d,c|start 'PWMy' with port 'Pxx', 'd' duty cycle and 'c' CMP|Example: AT+PWM=PWM5,PB5,1000,500
+|32|AT+PWM=PWMy,Pxx,d,c|start 'PWMy' with GPIO 'Pxx', 'd' duty cycle and 'c' CMP|Example: AT+PWM=PWM5,PB5,1000,500
 
-Pxx can be PA1..8, PB0..7, PC0..7, PD0..7, PE0..3
-PWMy can be PWM0..5, PWM0_N..PWM5_N
+Allowed values:
+
+- Pxx can be PA1..8, PB0..7, PC0..7, PD0..7, PE0..3
+- PWMy can be PWM0..5, PWM0_N..PWM5_N
+
+The Ai-Thinker TB-03F-KIT module associates three LEDs to the PC2, PC3, PC4, PB4 and PB5 GPIO ports:
 
 LED|Color
 ---|-----
 PC2|RBG Blue
 PC3|RBG Red
 PC4|RBG Green
-PB4|Lateral small Yellow
-PB5|Lateral While
+PB4|Lateral small Yellow LED
+PB5|Lateral White LED
 
 ## Host mode
+
 In master mode, the module can communicate with another slave module. The main operations are as follows:
 
 Configure the module into host (master) mode:
@@ -434,6 +440,7 @@ Returning `OK` means the connection is successful. Use the following command to 
 Note: There is only AT command mode in the host state, and there is no transparent transmission mode.
 
 ## Low power consumption
+
 The AT firmware supports two sleep modes, namely `deep sleep` and `light sleep`. In deep sleep mode, except for the GPIO wake-up function, all other functions of the module are turned off, and the power consumption is 1uA. one time. In addition to retaining GPIO wake-up, the light sleep mode also maintains the Bluetooth function. The power consumption is determined by the broadcast parameters, with an average of less than 10uA.
 
 Enter deep sleep mode:
@@ -462,6 +469,7 @@ It does not automatically enter light sleep mode after powering on;
 Note: Light sleep mode only works in the slave state. If low power consumption is used, it is not recommended to set the baud rate below 115200. If the baud rate is too low, sending data through the serial port will take up a lot of time, thus affecting power consumption.
 
 ## iBeacon Mode
+
 iBeacon is a special set of broadcast formats defined by Apple, mainly used for indoor positioning.
 This iBeacon broadcast packet is 30 bytes in total, and the data format is as follows:
 
