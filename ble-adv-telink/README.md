@@ -43,24 +43,24 @@ The following SCAN modes are allowed:
 
 |AT setting code|Return code|Note|
 |---|---|---|
-|`AT+SCAN`|Output depends on the SCAN mode|Start SCAN without modifying the SCAN mode|
-|`AT+SCAN=0`|`+SCAN_TYPE:0`, |Start SCAN and automatically disable it after 3 seconds (default)|
-|`AT+SCAN=1`|`+SCAN_TYPE:1`, `+SCAN_SET_CONTINUOUS`|Start SCAN with no timeout|
-|`AT+SCAN=2`|`+SCAN_TYPE:2`, `+SCAN_SET_AUTO`|The SCAN is automatically started at boot, with no need of `AT+SCAN=2`
-|`AT+SCAN=3`|`+SCAN_TYPE:3`, `+SCAN_SET_AUTO_FILTER`|Same as `AT+SCAN=2`, but the scan filters only the brands in the following table
+|`AT+SCAN`|Output depends on the SCAN mode|Start SCAN without modifying the SCAN mode|On-demand mode
+|`AT+SCAN=0`|`+SCAN_TYPE:0`|Start SCAN and automatically disable it after 3 seconds (default)| On-demand mode
+|`AT+SCAN=1`|`+SCAN_TYPE:1`, `+SCAN_SET_CONTINUOUS`|Start SCAN with no timeout|On-demand mode. If the device is rebooted, the scan does not automatically start.
+|`AT+SCAN=2`|`+SCAN_TYPE:2`, `+SCAN_SET_AUTO`|Autonomous mode. The SCAN is automatically started at boot, with no need to issue an `AT+SCAN` command each time the device is booted. To stop this mode, use `AT+SCAN=0`
+|`AT+SCAN=3`|`+SCAN_TYPE:3`, `+SCAN_SET_AUTO_FILTER`|Same as `AT+SCAN=2`, but the scan filters only the OUIs in the following table
 
-Recognized MAC brands:
+Recognized OUIs in `AT+SCAN=3` mode:
 
-Brand MAC|Brand name|IC PIN|LED
+MAC OUI|Brand name|GPIO|LED
 --------|---|---|---
-A4:C1:38|Telink Semiconductor (Taipei) Co. Ltd|PC2|RBG Blue
-54:EF:44|Lumi United Technology Co., Ltd|PC3|RBG Red
-E4:AA:EC|Tianjin Hualai Tech Co, Ltd|PC4|RBG Green
-Any other MAC|filtered out with AT+SCAN=3|no led|
+A4:C1:38|Telink Semiconductor (Taipei) Co. Ltd|PC2 on, PC3 off, PC4 off|RBG Blue on, all others off
+54:EF:44|Lumi United Technology Co., Ltd|PC2 off, PC3 on, PC4 off|RBG Red on, all others off
+E4:AA:EC|Tianjin Hualai Tech Co, Ltd|PC2 off, PC3 off, PC4 on|RBG Green on, all others off
+Any other MAC|filtered out|PC2 off, PC3 off, PC4 off|All RBG LEDs off
 
-Change the code *app_master.c* to edit the trailing parts of MAC addresses which are filtered and to control related LED color.
+`AT+SCAN=3` reduces the amount of data sent to the host by only filtering BLE advertising in scope based on the OUI. The OUI (Organizationally Unique Identifier) takes the first 3 octets of the MAC and consists of a 24-bit number that uniquely identifies a vendor or manufacturer. At the moment, the filtering is in the code and cannot be customized via AT commands. The filtered vendors shall refer to the related BLE sensors in scope. Change the code *app_master.c* to edit the OUIs and control related LED colors.
 
-All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored into the non-volatile RAM of the device.
+All settings (e.g., `AT+MODE=<n>` and `AT+SCAN=<n>`) are permanently stored in the non-volatile RAM of the device.
 
 ## Compiling and installing
 
@@ -72,13 +72,9 @@ Switches can be passed with CFLAGS; e.g., `make CFLAGS="-D... -D..."`.
 
 The produced firmware is `src/out/ble-adv-telink.bin`.
 
-To burn the firmware with a PC, connect the device via USB and use either the *Telink_Tools.py* Python program, or the software [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe). Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x). The same software can be used to test the AT commands.
+To burn the firmware with a PC, connect the device via USB and use either the *Telink_Tools.py* Python program (Python2 and Python3, Windows and Linux), or the [Ai-Thinker_TB_Tools_V1.5.0.exe](https://ai-thinker.oss-cn-shenzhen.aliyuncs.com/TB_Tool/Ai-Thinker_TB_Tools_V1.5.0.exe) Window software. Check also the [related repository](https://github.com/Ai-Thinker-Open/TBXX_Flash_Tool/tree/1.x.x).
 
-- Select the appropriate COM port
-- press the button with "..." and select the firmware
-- press the right side button to the previously mentioned one "..."
-
-To enter an AT command, use the second tab. Select the port and bitrate, press the second button to connect the device, verify that the checkbox is selected.
+The *Telink_Tools.py* Python program requires `pip install pyserial`.
 
 Burning via Python program with Windows (in this example the Ai-Thinker device is connected via USB to the virtual COM8 serial port of a PC):
 
@@ -86,9 +82,9 @@ Burning via Python program with Windows (in this example the Ai-Thinker device i
 python3 make\Telink_Tools.py --port com8 burn src\out\ble-adv-telink.bin
 ```
 
-With WSL, install [USBIPD-WIN](https://learn.microsoft.com/windows/wsl/connect-usb#install-the-usbipd-win-project), then connect the USB device, run a CMD in Administration mode and issue:
+With WSL (Ubuntu), install [USBIPD-WIN](https://learn.microsoft.com/windows/wsl/connect-usb#install-the-usbipd-win-project), then connect the USB device, run a CMD in Administration mode and issue:
 
-```
+```cmd
 usbipd list
 usbipd bind -b 1-5
 usbipd attach --wsl --busid 1-5
@@ -98,12 +94,21 @@ Notes: use the BUSID returned by `usbipd list`. Ignore the warning. Use *usbipd 
 
 Then, with WSL:
 
-```
+```bash
 lsusb -tv
 python3 ../make/Telink_Tools.py --port /dev/ttyUSB0 burn out/ble-adv-telink.bin
 ```
 
 The *Telink_Tools.py* program will NOT work on freetz (the freetz device driver does not support sending ascii 0 characters).
+
+To flash the firmware with *Ai-Thinker_TB_Tools_V1.5.0.exe*:
+
+- First tab
+- Select the appropriate COM port
+- Press the button with "..." and select the firmware
+- Press the right side button to the previously mentioned one "..."
+
+*Ai-Thinker_TB_Tools_V1.5.0.exe* can be used to test the AT commands. To enter an AT command, use the second tab. Select the port and bitrate, press the second button to connect the device, verify that the checkbox is selected.
 
 ## Test program
 
