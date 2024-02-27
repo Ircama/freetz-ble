@@ -310,7 +310,7 @@ IRCAMA Ai-Thinker BLE AT V1.0.1
 
 Note: Coded PHY not working at the moment.
 
-The SDK in this repo is borrowed from https://github.com/pvvx/ATC_MiThermometer and https://github.com/atc1441/ATC_MiThermometer that possibly in turn reused the [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) (which might be based on Telink SDK 3.1 or 3.2).
+The SDK in this repo is borrowed from https://github.com/pvvx/ATC_MiThermometer and https://github.com/atc1441/ATC_MiThermometer that possibly in turn reused the [Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) (which might be based on Telink Kite BLE SDK 3.4.0).
 
 SDK documentation: https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tb/Telink%20Kite%20BLE%20SDK%20Developer%20Handbook.pdf
 
@@ -525,4 +525,5 @@ const u8 tbl_scanRsp [] = {
 ## Documentation
 
 - [SDK](https://shyboy.oss-cn-shenzhen.aliyuncs.com/readonly/tb/Telink%20Kite%20BLE%20SDK%20Developer%20Handbook.pdf)
-- [English SDK](https://wiki.telink-semi.cn/doc/an/AN_17092700-E_Telink 826x BLE SDK Developer Handbook.pdf)
+- [English SDK](https://wiki.telink-semi.cn/doc/an/AN_17092700-E_Telink%20826x%20BLE%20SDK%20Developer%20Handbook.pdf)
+- [Telink baidu](https://pan.baidu.com/s/1dDXVCqd#list/path=%2Ftelink%E5%85%A5%E9%97%A8%E8%B5%84%E6%96%99)
