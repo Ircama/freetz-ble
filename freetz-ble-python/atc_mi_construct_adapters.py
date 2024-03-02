@@ -1,16 +1,11 @@
+#coding=utf-8
 # Library module used by atc_mi_construct.py
 
 from construct import *  # pip3 install construct
 import re
 import ctypes
 import codecs
-so_file = "/var/mod/root/aes_ccm_codec.so"
-dll1 = ctypes.CDLL('libssl.so', mode=ctypes.RTLD_GLOBAL)
-dll2 = ctypes.CDLL('libcrypto.so', mode=ctypes.RTLD_GLOBAL)
-
-codec_library = ctypes.CDLL(so_file)
-codec_library.aes_ccm_decrypt.restype = ctypes.c_char_p
-codec_library.aes_ccm_encrypt.restype = ctypes.c_char_p
+from itertools import chain
 
 MacVendor = Switch(
     this.MAC[:9],
@@ -21,6 +16,18 @@ MacVendor = Switch(
     },
     default=Computed("Unknown vendor"),
 )
+
+
+def dict_union(*args):
+    return dict(chain.from_iterable(d.iteritems() for d in args))
+
+so_file = "/var/mod/root/aes_ccm_codec.so"
+dll1 = ctypes.CDLL('libssl.so', mode=ctypes.RTLD_GLOBAL)
+dll2 = ctypes.CDLL('libcrypto.so', mode=ctypes.RTLD_GLOBAL)
+
+codec_library = ctypes.CDLL(so_file)
+codec_library.aes_ccm_decrypt.restype = ctypes.c_char_p
+codec_library.aes_ccm_encrypt.restype = ctypes.c_char_p
 
 
 def handle_decrypt_error(descr):  # can be monkey patched
@@ -243,6 +250,15 @@ class MiLikeCodec(BtHomeCodec):
         mic = codecs.decode(ret_msg.split()[1], "hex")
         return ciphertext + count_id + mic
 
+
+class DecimalNumber(Adapter):
+    def __init__(self, subcon, decimal):
+        self.decimal = decimal
+        super(Adapter, self).__init__(subcon)
+        self._decode = lambda obj, ctx, path: float(obj) / self.decimal
+        self._encode = lambda obj, ctx, path: int(float(obj) * self.decimal)
+
+
 MacAddress = ExprAdapter(Byte[6],
     decoder = lambda obj, ctx: ":".join("%02x" % b for b in obj).upper(),
     encoder = lambda obj, ctx: bytes.fromhex(re.sub(r'[.:\- ]', '', obj))
@@ -250,64 +266,4 @@ MacAddress = ExprAdapter(Byte[6],
 ReversedMacAddress = ExprAdapter(Byte[6],
     decoder = lambda obj, ctx: ":".join("%02x" % b for b in obj[::-1]).upper(),
     encoder = lambda obj, ctx: bytes.fromhex(re.sub(r'[.:\- ]', '', obj))[::-1]
-)
-Int16ub_x1000 = ExprAdapter(
-    Int16ub,
-    lambda obj, ctx: int(obj) / 1000.0,
-    lambda obj, ctx: int(float(obj) * 1000.0)
-)
-Int16ul_x1000 = ExprAdapter(
-    Int16ul,
-    lambda obj, ctx: int(obj) / 1000.0,
-    lambda obj, ctx: int(float(obj) * 1000.0)
-)
-Int24ul_x1000 = ExprAdapter(
-    Int24ul,
-    lambda obj, ctx: int(obj) / 1000.0,
-    lambda obj, ctx: int(float(obj) * 1000.0)
-)
-Int32ul_x1000 = ExprAdapter(
-    Int32ul,
-    lambda obj, ctx: int(obj) / 1000.0,
-    lambda obj, ctx: int(float(obj) * 1000.0)
-)
-Int16ul_x100 = ExprAdapter(
-    Int16ul,
-    lambda obj, ctx: int(obj) / 100.0,
-    lambda obj, ctx: int(float(obj) * 100.0)
-)
-Int24ul_x100 = ExprAdapter(
-    Int24ul,
-    lambda obj, ctx: int(obj) / 100.0,
-    lambda obj, ctx: int(float(obj) * 100.0)
-)
-Int16sl_x100 = ExprAdapter(
-    Int16sl,
-    lambda obj, ctx: int(obj) / 100.0,
-    lambda obj, ctx: int(float(obj) * 100.0)
-)
-Int16ub_x10 = ExprAdapter(
-    Int16ub,
-    lambda obj, ctx: int(obj) / 10.0,
-    lambda obj, ctx: int(float(obj) * 10.0)
-)
-Int16ul_x10 = ExprAdapter(
-    Int16ul,
-    lambda obj, ctx: int(obj) / 10.0,
-    lambda obj, ctx: int(float(obj) * 10.0)
-)
-Int16sb_x10 = ExprAdapter(
-    Int16sb,
-    lambda obj, ctx: int(obj) / 10.0,
-    lambda obj, ctx: int(float(obj) * 10.0)
-)
-Int16sl_x10 = ExprAdapter(
-    Int16sl,
-    lambda obj, ctx: int(obj) / 10.0,
-    lambda obj, ctx: int(float(obj) * 10.0)
-)
-Int8ul_x10 = ExprAdapter(
-    Int8ul,
-    lambda obj, ctx: int(obj) / 10.0,
-    lambda obj, ctx: int(float(obj) * 10.0)
 )

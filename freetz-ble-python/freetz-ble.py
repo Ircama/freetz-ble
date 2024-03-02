@@ -10,6 +10,11 @@ from datetime import datetime, date, timedelta
 from atc_mi_construct import general_format
 import monotonic
 
+# Use UTF-8 with Python2
+import sys
+reload(sys)
+sys.setdefaultencoding('UTF8')
+
 ########## START CONFIGURATION #####################
 DATA_DIRECTORY = "/var/mod/root/freetz-ble/"
 SQLITE_DATASET = DATA_DIRECTORY + 'sensorsData.db'
