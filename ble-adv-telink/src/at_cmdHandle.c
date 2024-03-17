@@ -47,45 +47,48 @@ typedef struct _gpio {
 
 _gpio_t gpio_ports[] =
 {
-    { "PA1", GPIO_PA1 },
+    // TLSR8253F512 PIN   -- TB-03F-KIT
+    { "PA0", GPIO_PA0 },  // UART_RX_PA0, RXD
+    { "PA1", GPIO_PA1 },  // A1
     { "PA2", GPIO_PA2 },
     { "PA3", GPIO_PA3 },
     { "PA4", GPIO_PA4 },
     { "PA5", GPIO_PA5 },
     { "PA6", GPIO_PA6 },
-    { "PA7", GPIO_PA7 },
+    { "PA7", GPIO_PA7 },  // SWS (UART_DTR), KEY_USER
 
     { "PB0", GPIO_PB0 },
-    { "PB1", GPIO_PB1 },
+    { "PB1", GPIO_PB1 },  // UART_TX_PB1, TXD
     { "PB2", GPIO_PB2 },
     { "PB3", GPIO_PB3 },
-    { "PB4", GPIO_PB4 },
-    { "PB5", GPIO_PB5 },
-    { "PB6", GPIO_PB6 },
-    { "PB7", GPIO_PB7 },
+    { "PB4", GPIO_PB4 },  // Lateral small Yellow LED3, B4
+    { "PB5", GPIO_PB5 },  // Lateral White LED2, B5
+    { "PB6", GPIO_PB6 },  // B6
+    { "PB7", GPIO_PB7 },  // B7
 
-    { "PC0", GPIO_PC0 },
-    { "PC1", GPIO_PC1 },
-    { "PC2", GPIO_PC2 },
-    { "PC3", GPIO_PC3 },
-    { "PC4", GPIO_PC4 },
+    { "PC0", GPIO_PC0 },  // C0
+    { "PC1", GPIO_PC1 },  // C1
+    { "PC2", GPIO_PC2 },  // RGB Blue LED1, C2
+    { "PC3", GPIO_PC3 },  // RGB Red LED1, C3 (PWM1)
+    { "PC4", GPIO_PC4 },  // RGB Green LED1, C4 (PWM2)
     { "PC5", GPIO_PC5 },
     { "PC6", GPIO_PC6 },
     { "PC7", GPIO_PC7 },
 
     { "PD0", GPIO_PD0 },
     { "PD1", GPIO_PD1 },
-    { "PD2", GPIO_PD2 },
-    { "PD3", GPIO_PD3 },
-    { "PD4", GPIO_PD4 },
+    { "PD2", GPIO_PD2 },  // D2 (PWM3)
+    { "PD3", GPIO_PD3 },  // D3
+    { "PD4", GPIO_PD4 },  // D4
     { "PD5", GPIO_PD5 },
     { "PD6", GPIO_PD6 },
-    { "PD7", GPIO_PD7 },
+    { "PD7", GPIO_PD7 },  // D7
 
     { "PE0", GPIO_PE0 },
     { "PE1", GPIO_PE1 },
     { "PE2", GPIO_PE2 },
     { "PE3", GPIO_PE3 },
+    // KEY_RST == UART RTS == RESET
 
 	{0, 	0}
 };

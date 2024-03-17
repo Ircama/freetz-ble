@@ -7,8 +7,8 @@ import logging
 import os.path
 import argparse
 from datetime import datetime, date, timedelta
-from atc_mi_construct import general_format
 import monotonic
+from ble_adv_data import ble_ad_data, setGlobalPrintFullStrings
 
 # Use UTF-8 with Python2
 import sys
@@ -201,38 +201,43 @@ is_ready = False
 latest_frames = {}
 latest_values = {}
 
-logging.warning("Starting BLE Advertisement Sensor Processor")
-
+logging.warning(
+    "_______________________"
+    "Starting Freetz-Ble: BLE Advertisement Sensor Processor"
+    "_______________________"
+)
+setGlobalPrintFullStrings(enabled=True)
 while True:
     data = ser.readline().rstrip()
     if data == '+READY':
         is_ready = True
     if not is_ready:
         continue
-    if not data.startswith('+ADV:'):
+    if data == '+ATWD':
+        ipc["watchdog"] = datetime.utcnow().strftime(TIMESTAMP_F)
+        logging.debug("Watchdog received")
         continue
-    record = data[5:].split(',')
-    mac = record[1]
-    if record[2].startswith('020106'):
-        frame = record[2][6:]
-    else:
-        frame = record
+    if not data.startswith('+ADV:'):
+        logging.debug("Skipping '%s'", data)
+        continue
+    frame = data[5:].split(',')  # skip '+ADV '
+    mac = frame[1]
+    payload = frame[2]
 
     logging.debug("rssi: %s", record[0])
     logging.debug("MAC: %s", mac)
-    logging.debug("data: %s", record[2])
-    logging.debug("frame: %s", frame)
+    logging.debug("payload: %s", payload)
 
     if mac in excluded_mac:
         continue
 
     # Remove duplicated frames
-    if frame == latest_frames.get(mac):
+    if payload == latest_frames.get(mac):
         continue
-    latest_frames[mac] = frame
+    latest_frames[mac] = payload
 
-    atc_mi_data = general_format.parse(
-        codecs.decode(frame, "hex"),
+    atc_mi_data = ble_ad_data.parse(
+        codecs.decode(payload, "hex"),
         mac_address=codecs.decode(mac, "hex"),
         bindkey=bindkey[mac] if mac in bindkey else None
     )

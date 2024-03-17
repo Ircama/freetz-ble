@@ -258,7 +258,7 @@ And this repeats over the whole raw data. You can find the meaning of raw data i
   - 14: Length: 20 bytes
   - 16: Type: Service Data - 16-bit UUID
   - FCB2: UUID
-  - 4195b0efda789dd953b02600009341626f: BT Home v2 format data
+  - 4195B0EFDA789DD953B02600009341626F: BT Home v2 format data
 
   ```
     size = 20
@@ -289,6 +289,10 @@ And this repeats over the whole raw data. You can find the meaning of raw data i
                     humidity = 62.22
                     humidity_unit = u"%" (total 1)
   ```
+
+Note: the mac_address and bindkey are needed to decode this frame:
+- mac_address = "A4:C1:38:AA:BB:CC"
+- bindkey = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
 
 Example of output with `AT+SCAN=2`:
 

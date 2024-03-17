@@ -20,44 +20,48 @@ atc_flag = BitStruct(  # GPIO_TRG pin (marking "reset" on circuit board) flags:
     "input_gpio_value" / Flag,  # Bit 0 - Reed Switch, input
 )
 
-custom_format = Struct(
-    "version" / Computed(1),
-    "size" / Int8ul,  # 18 (0x12)
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
-    "MAC" / ReversedMacAddress,  # [0] - lo, .. [6] - hi digits
-    "mac_vendor" / MacVendor,
-    "temperature" / DecimalNumber(Int16sl, 100),
-    "temperature_unit" / Computed("°C"),
-    "humidity" / DecimalNumber(Int16ul, 100),
-    "humidity_unit" / Computed("%"),
-    "battery_v" / DecimalNumber(Int16ul, 1000),
-    "battery_v_unit" / Computed("V"),
-    "battery_level" / Int8ul,  # 0..100 %
-    "battery_level_unit" / Computed("%"),
-    "counter" / Int8ul,  # measurement count
-    "flags" / atc_flag
+custom_format = Prefixed(
+    Int8ul,  # size = 18 (0x12)
+    Struct(
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
+        "MAC" / ReversedMacAddress,  # [0] - lo, .. [6] - hi digits
+        "mac_vendor" / MacVendor,
+        "temperature" / DecimalNumber(Int16sl, 100),
+        "temperature_unit" / Computed("°C"),
+        "humidity" / DecimalNumber(Int16ul, 100),
+        "humidity_unit" / Computed("%"),
+        "battery_v" / DecimalNumber(Int16ul, 1000),
+        "battery_v_unit" / Computed("V"),
+        "battery_level" / Int8ul,  # 0..100 %
+        "battery_level_unit" / Computed("%"),
+        "counter" / Int8ul,  # measurement count
+        "flags" / atc_flag
+    )
 )
 
 # -------------- custom_enc_format ---------------------------------------------
 # "PVVX (Custom)" advertising type, encrypted beacon checked
 
-custom_enc_format = Struct(
-    "version" / Computed(1),
-    "size" / Int8ul,  # 14 (0x0e)
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
-    "codec" / AtcMiCodec(
-        Struct(
-            "temperature" / DecimalNumber(Int16sl, 100),
-            "temperature_unit" / Computed("°C"),
-            "humidity" / DecimalNumber(Int16ul, 100),
-            "humidity_unit" / Computed("%"),
-            "battery_level" / Int8ul,  # 0..100 %
-            "battery_level_unit" / Computed("%"),
-            "flags" / atc_flag
-        )
-    ),
+custom_enc_format = Prefixed(
+    Int8ul,  # size = 14 (0x0e)
+    Struct(
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
+        "codec" / AtcMiCodec(
+            Struct(
+                "temperature" / DecimalNumber(Int16sl, 100),
+                "temperature_unit" / Computed("°C"),
+                "humidity" / DecimalNumber(Int16ul, 100),
+                "humidity_unit" / Computed("%"),
+                "battery_level" / Int8ul,  # 0..100 %
+                "battery_level_unit" / Computed("%"),
+                "flags" / atc_flag
+            )
+        ),
+    )
 )
 
 # -------------- atc1441_format ------------------------------------------------
@@ -65,22 +69,24 @@ custom_enc_format = Struct(
 
 # https://github.com/pvvx/ATC_MiThermometer#atc1441-format
 
-atc1441_format = Struct(
-    "version" / Computed(1),
-    "size" / Int8ul,  # 18
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
-    "MAC" / MacAddress,  # [0] - hi, .. [6] - lo digits
-    "mac_vendor" / MacVendor,
-    "temperature" / DecimalNumber(Int16sb, 10),
-    "temperature_unit" / Computed("°C"),
-    "humidity" / Int8ul,  # 0..100 %
-    "humidity_unit" / Computed("%"),
-    "battery_level" / Int8ul,  # 0..100 %
-    "battery_level_unit" / Computed("%"),
-    "battery_v" / DecimalNumber(Int16ub, 1000),
-    "battery_v_unit" / Computed("V"),
-    "counter" / Int8ub  # frame packet counter
+atc1441_format = Prefixed(
+    Int8ul,  # size = 18
+    Struct(
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
+        "MAC" / MacAddress,  # [0] - hi, .. [6] - lo digits
+        "mac_vendor" / MacVendor,
+        "temperature" / DecimalNumber(Int16sb, 10),
+        "temperature_unit" / Computed("°C"),
+        "humidity" / Int8ul,  # 0..100 %
+        "humidity_unit" / Computed("%"),
+        "battery_level" / Int8ul,  # 0..100 %
+        "battery_level_unit" / Computed("%"),
+        "battery_v" / DecimalNumber(Int16ub, 1000),
+        "battery_v_unit" / Computed("V"),
+        "counter" / Int8ub  # frame packet counter
+    )
 )
 
 # -------------- atc1441_enc_format ------------------------------------------------
@@ -89,26 +95,28 @@ atc1441_format = Struct(
 # encrypted custom beacon
 # https://github.com/pvvx/ATC_MiThermometer/issues/94#issuecomment-842846036
 
-atc1441_enc_format = Struct(
-    "version" / Computed(1),
-    "size" / Int8ul,  # 14 (0x0e)
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
-    "codec" / AtcMiCodec(
-        Struct(
-            "temperature" / ExprAdapter(Int8sl,  # -40...87 °C with half degree precision
-                obj_ / 2 - 40, lambda obj, ctx: int((float(obj) + 40) * 2)),
-            "temperature_unit" / Computed("°C"),
-            "humidity" / ExprAdapter(Int8ul,  # half unit precision
-                obj_ / 2, lambda obj, ctx: int(float(obj) * 2)),
-            "humidity_unit" / Computed("%"),
-            "batt_trg" / BitStruct(
-                "out_gpio_trg_flag" / Flag,  # If this flag is set, the output GPIO_TRG pin is controlled according to the set parameters threshold temperature or humidity
-                "battery_level" / BitsInteger(7),  # 0..100 %
-                "battery_level_unit" / Computed("%"),
+atc1441_enc_format = Prefixed(
+    Int8ul,  # size = 14 (0x0e)
+    Struct(
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1a")),  # GATT Service 0x181A Environmental Sensing
+        "codec" / AtcMiCodec(
+            Struct(
+                "temperature" / ExprAdapter(Int8sl,  # -40...87 °C with half degree precision
+                    obj_ / 2 - 40, lambda obj, ctx: int((float(obj) + 40) * 2)),
+                "temperature_unit" / Computed("°C"),
+                "humidity" / ExprAdapter(Int8ul,  # half unit precision
+                    obj_ / 2, lambda obj, ctx: int(float(obj) * 2)),
+                "humidity_unit" / Computed("%"),
+                "batt_trg" / BitStruct(
+                    "out_gpio_trg_flag" / Flag,  # If this flag is set, the output GPIO_TRG pin is controlled according to the set parameters threshold temperature or humidity
+                    "battery_level" / BitsInteger(7),  # 0..100 %
+                    "battery_level_unit" / Computed("%"),
+                )
             )
-        )
-    ),
+        ),
+    )
 )
 
 # -------------- mi_like_format ------------------------------------------------
@@ -381,61 +389,63 @@ mi_like_data = Struct(  # https://github.com/pvvx/ATC_MiThermometer/blob/master/
     )
 )
 
-mi_like_format = Struct(
-    "version" / Computed(2),
-    "size" / Int8ul,  # e.g., 21
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\xfe\x95")),  # 16-bit UUID for Members 0xFE95 Xiaomi Inc.
-    "ctrl" / BitStruct(  # Frame Control (https://github.com/pvvx/ATC_MiThermometer/blob/master/src/mi_beacon.h#L104-L124)
-        "Mesh" / Flag,  # 0: does not include Mesh; 1: includes Mesh. For standard BLE access products and high security level access, this item is mandatory to 0. This item is mandatory for Mesh access to 1. For more information about Mesh access, please refer to Mesh related documents
-        "Object_Include" / Flag,  # 0: does not contain Object; 1: contains Object
-        "Capability_Include" / Flag,  # 0: does not include Capability; 1: includes Capability. Before the device is bound, this bit is forced to 1
-        "MAC_Include" / Flag,  # 0: Does not include the MAC address; 1: includes a fixed MAC address (the MAC address is included for iOS to recognize this device and connect)
-        "isEncrypted" / Flag,  # 0: The package is not encrypted; 1: The package is encrypted
-        "Reserved" / BitsInteger(3),
-        "version" / BitsInteger(4),  # Version number (currently v5)
-        "Auth_Mode" / BitsInteger(2),  # 0: old version certification; 1: safety certification; 2: standard certification; 3: reserved
-        "solicited" / Flag,  # 0: No operation; 1: Request APP to register and bind. It is only valid when the user confirms the pairing by selecting the device on the developer platform, otherwise set to 0. The original name of this item was bindingCfm, and it was renamed to solicited "actively request, solicit" APP for registration and binding
-        "registered" / Flag,  # 0: The device is not bound; 1: The device is registered and bound. This item is used to indicate whether the device is reset
-    ),
-    "device_id" / Enum(Int16ul,  # Device type (https://github.com/pvvx/ATC_MiThermometer/blob/master/src/mi_beacon.h#L14-L35)
-        XIAOMI_DEV_ID_LYWSDCGQ       = 0x01AA,  # Xiaomi Mijia Bluetooth Thermometer
-        XIAOMI_DEV_ID_CGG1           = 0x0347,  # Xiaomi ClearGrass Bluetooth Hygrothermograph
-        XIAOMI_DEV_ID_CGG1_ENCRYPTED = 0x0B48,  # Qingping Temp & RH Monitor
-        XIAOMI_DEV_ID_CGDK2          = 0x066F,  # Xiaomi Qingping Temp & RH Monitor Lite
-        XIAOMI_DEV_ID_LYWSD02        = 0x045B,  # Xiaomi Mijia Digital Clock
-        XIAOMI_DEV_ID_LYWSD03MMC     = 0x055B,  # Xiaomi Mijia Temperature And Humidity Monitor
-        XIAOMI_DEV_ID_CGD1           = 0x0576,  # Xiaomi Qingping Bluetooth Alarm Clock
-        XIAOMI_DEV_ID_MHO_C303       = 0x06d3,  # MiaoMiaoce Smart Clock Temperature and Humidity Sensor
-        XIAOMI_DEV_ID_MHO_C401       = 0x0387,  # Xiaomi E-Ink Smart Thermometer Hygrometer
-        XIAOMI_DEV_ID_JQJCY01YM      = 0x02DF,  # Xiaomi Formaldehyde Monitor
-        XIAOMI_DEV_ID_HHCCJCY01      = 0x0098,  # Xiaomi Mijia Flower Care (Conductivity, Illuminance, Moisture, Temperature)
-        XIAOMI_DEV_ID_GCLS002        = 0x03BC,  # Xiaomi Mijia Flower Care (soil moisture, temperature, light, nutrient detection)
-        XIAOMI_DEV_ID_HHCCPOT002     = 0x015D,  # Xiaomi Mijia Smart Flower Pot
-        XIAOMI_DEV_ID_WX08ZM         = 0x040A,  # Xiaomi Mijia Mosquito Repellent Device
-        XIAOMI_DEV_ID_MCCGQ02HL      = 0x098B,  # Xiaomi Mijia Door and Window Sensor 2
-        XIAOMI_DEV_ID_YM_K1501       = 0x0083,  # Xiaomi Viomi Mija Smart Kettle
-        XIAOMI_DEV_ID_YM_K1501EU     = 0x0113,  # Xiaomi Viomi Mija Smart Kettle
-        XIAOMI_DEV_ID_V_SK152        = 0x045C,  # Xiaomi Viomi Mija Smart Kettle
-        XIAOMI_DEV_ID_SJWS01LM       = 0x0863,  # Xiaomi Mijia Flood Detector
-        XIAOMI_DEV_ID_MJYD02YL       = 0x07F6,  # Xiaomi Mijia Motion Activated Night Light 2
-        XIAOMI_DEV_ID_RTCGQ02LM      = 0x0A8D,  # Xiaomi Mi Smart Home Occupancy Sensor 2
-        XIAOMI_DEV_ID_XMMFO1JQD      = 0x04E1,  # Xiaomi Mijia bluetooth Smart Rubik's Cube
-        XIAOMI_DEV_ID_YLAI003        = 0x07BF   # Yeelight Remote Control 1S Wireless Switch
-    ),
-    "counter" / Int8ul,  # 0..0xff..0 frame/measurement count
-    "MAC" / ReversedMacAddress,  # [0] - lo, .. [6] - hi digits
-    "mac_vendor" / MacVendor,
-    "data_point" / Switch(this.ctrl.isEncrypted,
-        {
-            True: MiLikeCodec(
-                Struct(
-                    "count_id" / Int24ul,
-                    "payload" / GreedyRange(mi_like_data)
-                )
-            ),
-            False: GreedyRange(mi_like_data)
-        }
+mi_like_format = Prefixed(
+    Int8ul,  # size, e.g., 21
+    Struct(
+        "version" / Computed(2),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\xfe\x95")),  # 16-bit UUID for Members 0xFE95 Xiaomi Inc.
+        "ctrl" / BitStruct(  # Frame Control (https://github.com/pvvx/ATC_MiThermometer/blob/master/src/mi_beacon.h#L104-L124)
+            "Mesh" / Flag,  # 0: does not include Mesh; 1: includes Mesh. For standard BLE access products and high security level access, this item is mandatory to 0. This item is mandatory for Mesh access to 1. For more information about Mesh access, please refer to Mesh related documents
+            "Object_Include" / Flag,  # 0: does not contain Object; 1: contains Object
+            "Capability_Include" / Flag,  # 0: does not include Capability; 1: includes Capability. Before the device is bound, this bit is forced to 1
+            "MAC_Include" / Flag,  # 0: Does not include the MAC address; 1: includes a fixed MAC address (the MAC address is included for iOS to recognize this device and connect)
+            "isEncrypted" / Flag,  # 0: The package is not encrypted; 1: The package is encrypted
+            "Reserved" / BitsInteger(3),
+            "version" / BitsInteger(4),  # Version number (currently v5)
+            "Auth_Mode" / BitsInteger(2),  # 0: old version certification; 1: safety certification; 2: standard certification; 3: reserved
+            "solicited" / Flag,  # 0: No operation; 1: Request APP to register and bind. It is only valid when the user confirms the pairing by selecting the device on the developer platform, otherwise set to 0. The original name of this item was bindingCfm, and it was renamed to solicited "actively request, solicit" APP for registration and binding
+            "registered" / Flag,  # 0: The device is not bound; 1: The device is registered and bound. This item is used to indicate whether the device is reset
+        ),
+        "device_id" / Enum(Int16ul,  # Device type (https://github.com/pvvx/ATC_MiThermometer/blob/master/src/mi_beacon.h#L14-L35)
+            XIAOMI_DEV_ID_LYWSDCGQ       = 0x01AA,  # Xiaomi Mijia Bluetooth Thermometer
+            XIAOMI_DEV_ID_CGG1           = 0x0347,  # Xiaomi ClearGrass Bluetooth Hygrothermograph
+            XIAOMI_DEV_ID_CGG1_ENCRYPTED = 0x0B48,  # Qingping Temp & RH Monitor
+            XIAOMI_DEV_ID_CGDK2          = 0x066F,  # Xiaomi Qingping Temp & RH Monitor Lite
+            XIAOMI_DEV_ID_LYWSD02        = 0x045B,  # Xiaomi Mijia Digital Clock
+            XIAOMI_DEV_ID_LYWSD03MMC     = 0x055B,  # Xiaomi Mijia Temperature And Humidity Monitor
+            XIAOMI_DEV_ID_CGD1           = 0x0576,  # Xiaomi Qingping Bluetooth Alarm Clock
+            XIAOMI_DEV_ID_MHO_C303       = 0x06d3,  # MiaoMiaoce Smart Clock Temperature and Humidity Sensor
+            XIAOMI_DEV_ID_MHO_C401       = 0x0387,  # Xiaomi E-Ink Smart Thermometer Hygrometer
+            XIAOMI_DEV_ID_JQJCY01YM      = 0x02DF,  # Xiaomi Formaldehyde Monitor
+            XIAOMI_DEV_ID_HHCCJCY01      = 0x0098,  # Xiaomi Mijia Flower Care (Conductivity, Illuminance, Moisture, Temperature)
+            XIAOMI_DEV_ID_GCLS002        = 0x03BC,  # Xiaomi Mijia Flower Care (soil moisture, temperature, light, nutrient detection)
+            XIAOMI_DEV_ID_HHCCPOT002     = 0x015D,  # Xiaomi Mijia Smart Flower Pot
+            XIAOMI_DEV_ID_WX08ZM         = 0x040A,  # Xiaomi Mijia Mosquito Repellent Device
+            XIAOMI_DEV_ID_MCCGQ02HL      = 0x098B,  # Xiaomi Mijia Door and Window Sensor 2
+            XIAOMI_DEV_ID_YM_K1501       = 0x0083,  # Xiaomi Viomi Mija Smart Kettle
+            XIAOMI_DEV_ID_YM_K1501EU     = 0x0113,  # Xiaomi Viomi Mija Smart Kettle
+            XIAOMI_DEV_ID_V_SK152        = 0x045C,  # Xiaomi Viomi Mija Smart Kettle
+            XIAOMI_DEV_ID_SJWS01LM       = 0x0863,  # Xiaomi Mijia Flood Detector
+            XIAOMI_DEV_ID_MJYD02YL       = 0x07F6,  # Xiaomi Mijia Motion Activated Night Light 2
+            XIAOMI_DEV_ID_RTCGQ02LM      = 0x0A8D,  # Xiaomi Mi Smart Home Occupancy Sensor 2
+            XIAOMI_DEV_ID_XMMFO1JQD      = 0x04E1,  # Xiaomi Mijia bluetooth Smart Rubik's Cube
+            XIAOMI_DEV_ID_YLAI003        = 0x07BF   # Yeelight Remote Control 1S Wireless Switch
+        ),
+        "counter" / Int8ul,  # 0..0xff..0 frame/measurement count
+        "MAC" / ReversedMacAddress,  # [0] - lo, .. [6] - hi digits
+        "mac_vendor" / MacVendor,
+        "data_point" / Switch(this.ctrl.isEncrypted,
+            {
+                True: MiLikeCodec(
+                    Struct(
+                        "count_id" / Int24ul,
+                        "payload" / GreedyRange(mi_like_data)
+                    )
+                ),
+                False: GreedyRange(mi_like_data)
+            }
+        )
     )
 )
 
@@ -742,28 +752,32 @@ bt_home_data = Struct(
 # BTHome v1, unencrypted advertising type. https://bthome.io/v1/
 # https://github.com/custom-components/ble_monitor/issues/548
 
-bt_home_format = Struct(  # V1 simplified formatting
-    "version" / Computed(1),
-    "size" / Int8ul,
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1c")),  # BT_HOME_GATT, SERVICE_UUID_USER_DATA, HA_BLE, no security
-    "bt_home_data" / GreedyRange(bt_home_data)
+bt_home_format = Prefixed(
+    Int8ul,  # size
+    Struct(  # V1 simplified formatting
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1c")),  # BT_HOME_GATT, SERVICE_UUID_USER_DATA, HA_BLE, no security
+        "bt_home_data" / GreedyRange(bt_home_data)
+    )
 )
 
 # -------------- bt_home_enc_format --------------------------------------------
 # BTHome v1, encrypted advertising type. https://bthome.io/v1/
 
-bt_home_enc_format = Struct(  # Simplified formatting
-    "version" / Computed(1),
-    "size" / Int8ul,
-    "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
-    "UUID" / ByteSwapped(Const(b"\x18\x1e")),  # Bond Management Service
-    "codec" / BtHomeCodec(
-        Struct(
-            "count_id" / Int32ul,  # https://github.com/custom-components/ble_monitor/issues/548#issuecomment-1059874327
-            "payload" / GreedyRange(bt_home_data)
-        )
-    ),
+bt_home_enc_format = Prefixed(
+    Int8ul,  # size
+    Struct(  # Simplified formatting
+        "version" / Computed(1),
+        "uid" / Int8ul,  # BLE classifier - Common Data Type; 0x16=22=Service Data, 16-bit UUID follows https://www.bluetooth.com/specifications/assigned-numbers/generic-access-profile/
+        "UUID" / ByteSwapped(Const(b"\x18\x1e")),  # Bond Management Service
+        "codec" / BtHomeCodec(
+            Struct(
+                "count_id" / Int32ul,  # https://github.com/custom-components/ble_monitor/issues/548#issuecomment-1059874327
+                "payload" / GreedyRange(bt_home_data)
+            )
+        ),
+    )
 )
 
 # -------------- bt_home_v2_format ---------------------------------------------
@@ -1168,28 +1182,30 @@ bt_home_v2_data = Struct(
     )
 )
 
-bt_home_v2_format = Struct(  # https://bthome.io/format/
-    "version" / Computed(1),
-    "size" / Int8ul,  # examples: 0B or 0E
-    "uid" / Int8ul,  # 0x16
-    "UUID" / ByteSwapped(Const(b"\xfc\xd2")),  # BTHomeV2
-    "DevInfo" / BitStruct(
-        "Version" / BitsInteger(3),  # Version number (currently v2)
-        "Reserved2" / BitsInteger(2),
-        "Trigger" / Flag,  # 0: advertisements at a regular interval (bit 2 = 0), or when triggered (bit 2 = 1)
-        "Reserved1" / BitsInteger(1),
-        "Encryption" / Flag,  # non-encrypted data (bit 0 = 0), or encrypted data (bit 0 = 1)
-    ),
-    "data_point" / Switch(this.DevInfo.Encryption,
-        {
-            True: BtHomeV2Codec(
-                Struct(
-                    "count_id" / Int32ul,
-                    "payload" / GreedyRange(bt_home_v2_data),
-                )
-            ),
-            False: GreedyRange(bt_home_v2_data)
-        }
+bt_home_v2_format = Prefixed(
+    Int8ul,  # size; examples: 0B or 0E
+    Struct(  # https://bthome.io/format/
+        "version" / Computed(1),
+        "uid" / Int8ul,  # 0x16
+        "UUID" / ByteSwapped(Const(b"\xfc\xd2")),  # BTHomeV2
+        "DevInfo" / BitStruct(
+            "Version" / BitsInteger(3),  # Version number (currently v2)
+            "Reserved2" / BitsInteger(2),
+            "Trigger" / Flag,  # 0: advertisements at a regular interval (bit 2 = 0), or when triggered (bit 2 = 1)
+            "Reserved1" / BitsInteger(1),
+            "Encryption" / Flag,  # non-encrypted data (bit 0 = 0), or encrypted data (bit 0 = 1)
+        ),
+        "data_point" / Switch(this.DevInfo.Encryption,
+            {
+                True: BtHomeV2Codec(
+                    Struct(
+                        "count_id" / Int32ul,
+                        "payload" / GreedyRange(bt_home_v2_data),
+                    )
+                ),
+                False: GreedyRange(bt_home_v2_data)
+            }
+        )
     )
 )
 
