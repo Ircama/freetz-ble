@@ -224,6 +224,26 @@ def read_flash(_port, args):
     else:
         print("\033[3;31mFail!\033[0m")
 
+def write_flash_fill(_port, args):
+    write_flash(_port, args, fill=True)
+
+def write_flash(_port, args, fill=False):
+    flash_addr = int(args.addr, 0)
+    bytes_data = bytearray()
+    bytes_data = bytes_data.fromhex(args.data)
+
+    if len(bytes_data) > 255:
+        print("\033[3;31mThe MAX write len is 255 bytes!\033[0m")
+        return
+
+    if fill:
+        bytes_data += b'\xff' * (256 - len(bytes_data))
+
+    if not telink_flash_write(_port, flash_addr, bytes_data):
+        print("\033[3;31mFail!\033[0m")
+        return
+    print("\033[3;32mSuccess!\033[0m")
+
 def burn(_port, args):
     #  Try to change Baud to 921600 
     sys.stdout.flush()
@@ -320,6 +340,10 @@ def main(custom_commandline=None):
     write_flash.add_argument('addr', help='write addr')
     write_flash.add_argument('data', help='data to write')
 
+    write_flash = subparsers.add_parser('write_flash_fill', help='Write data to flash and fill data with ff')
+    write_flash.add_argument('addr', help='write addr')
+    write_flash.add_argument('data', help='data to write')
+
     write_flash = subparsers.add_parser('read_flash', help='Read data from flash')
     write_flash.add_argument('addr', help='read addr')
     write_flash.add_argument('len',  help='len to read')
@@ -337,6 +361,7 @@ def main(custom_commandline=None):
         sys.exit(1)
 
     operation_func = globals()[args.operation]
+    print("Operation: %s" % operation_func)
 
     if PYTHON2:
         # This function is depreciated in Python3
