@@ -6,6 +6,11 @@
  * @Description: In User Settings Edit
  * @FilePath: ble-adv-telink/README.md
  -->
+
+# Superseded Note
+
+This project is **superseded by** the [TLSR825x ADV_BLE2UART ble2uart](https://github.com/pvvx/ADV_BLE2UART/blob/master/source/ble2uart/README.md) firmware within [`ADV_BLE2UART`](https://github.com/pvvx/ADV_BLE2UART).
+
 # Ble-Adv-Telink Project
 
 This code is based on [Ai-Thinker Telink_825X_SDK](https://github.com/Ai-Thinker-Open/Telink_825X_SDK) and is tested on a [Ai-Thinker TB-03F-KIT](https://docs.ai-thinker.com/_media/tb-03f-kit_specification_en.pdf).

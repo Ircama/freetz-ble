@@ -236,3 +236,228 @@ err:
 
     return "error";
 }
+
+/* AES GCM Decrypt function */
+char * aes_gcm_decrypt(
+    unsigned char * gcm_ct, int gcm_ct_len,  // encrypted_data
+    unsigned char * gcm_key, int gcm_key_len,  // key
+    unsigned char * gcm_iv, size_t gcm_iv_len,  // initialization vector
+    unsigned char * gcm_tag, int gcm_tag_len,  // authentication tag
+    unsigned char * gcm_aad, int gcm_aad_len,  // additional authenticated data
+    int debug  // 0 (no debug) or 1 (debug)
+) {
+    int i = 0;
+    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER *cipher = NULL;
+    int outlen, rv;
+    unsigned char outbuf[1024];
+    unsigned char *ptr;
+    
+    if (debug) {
+        printf("AES GCM Decrypt:\n\n");
+    }
+
+    if (debug) {
+        printf("IV:\n");
+        BIO_dump_fp(stdout, gcm_iv, gcm_iv_len);
+        printf("\nIV length: %ld\n", gcm_iv_len);
+    }
+
+    OSSL_PARAM params[2] = {
+        OSSL_PARAM_END, OSSL_PARAM_END
+    };
+
+    if (debug) {
+        printf("\ngcm_ct Ciphertext:\n");
+        BIO_dump_fp(stdout, gcm_ct, gcm_ct_len);
+    }
+
+    /* Create a context for the decrypt operation */
+    if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+        goto err;
+
+    /* Fetch the cipher implementation */
+    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+        goto err;
+
+    /* Initialize decrypt operation */
+    if (!EVP_DecryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+        goto err;
+
+    /* Set IV length if different from default 12 bytes (96 bits) */
+    if (gcm_iv_len != 12) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, gcm_iv_len, NULL))
+            goto err;
+    }
+
+    /* Specify key and IV */
+    if (!EVP_DecryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv))
+        goto err;
+
+    /* Zero or one call to specify any AAD */
+    if (gcm_aad_len > 0) {
+        if (!EVP_DecryptUpdate(ctx, NULL, &outlen, gcm_aad, gcm_aad_len))
+            goto err;
+        
+        if (debug) {
+            printf("\ngcm_aad AAD:\n");
+            BIO_dump_fp(stdout, gcm_aad, gcm_aad_len);
+        }
+    }
+
+    /* Decrypt ciphertext */
+    if (!EVP_DecryptUpdate(ctx, outbuf, &outlen, gcm_ct, gcm_ct_len))
+        goto err;
+
+    if (debug) {
+        printf("\ngcm_tag Tag:\n");
+        BIO_dump_fp(stdout, gcm_tag, gcm_tag_len);
+    }
+
+    /* Set expected tag value */
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, gcm_tag_len, gcm_tag))
+        goto err;
+
+    /* Finalize: verify tag */
+    rv = EVP_DecryptFinal_ex(ctx, outbuf + outlen, &i);
+
+    /* Check tag verification result */
+    if (rv > 0) {
+        outlen += i;
+        
+        if (debug) {
+            printf("Tag verify successful!\nPlaintext:\n");
+            BIO_dump_fp(stdout, outbuf, outlen);
+        }
+        
+        ptr = text_buf;
+        for (i = 0; i < outlen; i++) {
+            ptr += sprintf(ptr, "%02X", outbuf[i]);
+        }
+            
+        EVP_CIPHER_free(cipher);
+        EVP_CIPHER_CTX_free(ctx);
+        return text_buf;
+    } else {
+        if (debug) {
+            printf("Tag verify failed!\nPlaintext not available\n");
+        }
+        goto err;
+    }
+
+err:
+    if (debug) {
+        ERR_print_errors_fp(stderr);
+    }
+
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+
+    return "error";
+}
+
+/* AES GCM Encrypt function */
+char * aes_gcm_encrypt(
+    unsigned char * gcm_pt, int gcm_pt_len,  // plaintext
+    unsigned char * gcm_key, int gcm_key_len,  // key
+    unsigned char * gcm_iv, size_t gcm_iv_len,  // initialization vector
+    int gcm_tag_len,  // desired tag length
+    unsigned char * gcm_aad, int gcm_aad_len,  // additional authenticated data
+    int debug  // 0 (no debug) or 1 (debug)
+) {
+    int i = 0;
+    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER *cipher = NULL;
+    int outlen, tmplen;
+    unsigned char outbuf[1024];
+    unsigned char outtag[16];
+    unsigned char *ptr = text_buf;
+
+    if (debug) {    
+        printf("AES GCM Encrypt:\n");
+        printf("Plaintext:\n");
+        BIO_dump_fp(stdout, gcm_pt, gcm_pt_len);
+    }
+
+    /* Create a context for the encrypt operation */
+    if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
+        goto err;
+
+    /* Fetch the cipher implementation */
+    if ((cipher = EVP_CIPHER_fetch(libctx, "AES-128-GCM", propq)) == NULL)
+        goto err;
+
+    /* Initialize encrypt operation */
+    if (!EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL))
+        goto err;
+
+    /* Set IV length if different from default 12 bytes (96 bits) */
+    if (gcm_iv_len != 12) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, gcm_iv_len, NULL))
+            goto err;
+    }
+
+    /* Specify key and IV */
+    if (!EVP_EncryptInit_ex(ctx, NULL, NULL, gcm_key, gcm_iv))
+        goto err;
+
+    /* Zero or one call to specify any AAD */
+    if (gcm_aad_len > 0) {
+        if (!EVP_EncryptUpdate(ctx, NULL, &outlen, gcm_aad, gcm_aad_len))
+            goto err;
+            
+        if (debug) {
+            printf("AAD:\n");
+            BIO_dump_fp(stdout, gcm_aad, gcm_aad_len);
+        }
+    }
+
+    /* Encrypt plaintext */
+    if (!EVP_EncryptUpdate(ctx, outbuf, &outlen, gcm_pt, gcm_pt_len))
+        goto err;
+
+    /* Output encrypted block */
+    if (debug) {    
+        printf("Ciphertext:\n");
+        BIO_dump_fp(stdout, outbuf, outlen);
+    }
+
+    for (i = 0; i < outlen; i++) {
+        ptr += sprintf(ptr, "%02X", outbuf[i]);
+    }
+    ptr += sprintf(ptr, " ");
+
+    /* Finalize encryption */
+    if (!EVP_EncryptFinal_ex(ctx, outbuf + outlen, &tmplen))
+        goto err;
+    
+    outlen += tmplen;
+
+    /* Get the tag */
+    if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, gcm_tag_len, outtag))
+        goto err;
+
+    /* Output tag */
+    if (debug) {    
+        printf("Tag:\n");
+        BIO_dump_fp(stdout, outtag, gcm_tag_len);
+    }
+
+    for (i = 0; i < gcm_tag_len; i++) {
+        ptr += sprintf(ptr, "%02X", outtag[i]);
+    }
+    
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return text_buf;
+    
+err:
+    if (debug) {
+        ERR_print_errors_fp(stderr);
+    }
+
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+
+    return "error";
+}

@@ -43,8 +43,6 @@ Included folders in this repository:
 
 - [freetz-ble-python](freetz-ble-python/README.md): test Python code (running with freetz),
 
-- [aes_ccm_codec](aes_ccm_codec/README.md): shared library to support AES CCM encryption, which is typically used by consumer BLE devices; this library can be invoked by Python code.
-
 For each software, see instructions README in the related project folder.
 
 ## Configuration notes
